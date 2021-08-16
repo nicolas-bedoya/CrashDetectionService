@@ -1,0 +1,37 @@
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="100"
+    android:layout_gravity="center"
+    tools:context=".ActivityCrashDetection">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Crash Detection (service)"
+        tools:layout_editor_absoluteX="76dp"
+        tools:layout_editor_absoluteY="38dp"
+        tools:textSize="36dp" />
+
+    <Button
+        android:id="@+id/butStartService"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start service"
+        android:onClick="startService"/>
+
+    <Button
+        android:id="@+id/butEndService"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="End service"
+        android:onClick="endService"/>
+
+
+</LinearLayout>
+
+

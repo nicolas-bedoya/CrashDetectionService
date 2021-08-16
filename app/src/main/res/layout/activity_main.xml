@@ -1,0 +1,33 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layout_gravity="top"
+    tools:context=".MainActivity">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome!"
+        tools:textSize="36dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Welcome to the Crash Detection App. The app currently measures data from acceleration and
+uses your velocity and determines whether you have experienced a crash or not. If a crash has been experienced, a text message
+will be sent to 2 emergency contacts you assign with your whereabouts and longitude and latitude.
+Press the button below to proceed!"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/butProceed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Proceed" />
+
+
+</LinearLayout>

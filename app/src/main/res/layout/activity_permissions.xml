@@ -1,0 +1,48 @@
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="100"
+    android:layout_gravity="top"
+    tools:context=".ActivityPermissions">
+
+    <TextView
+        android:id="@+id/titleText3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tick Permissions "
+        tools:layout_editor_absoluteX="76dp"
+        tools:layout_editor_absoluteY="38dp"
+        tools:textSize="36dp" />
+
+    <Switch
+        android:id="@+id/switchFineLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Permission: Fine Location" />
+
+    <Switch
+        android:id="@+id/switchSMS"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Permission: SMS" />
+
+    <Switch
+        android:id="@+id/switchExternalStorage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Permission: External Storage" />
+
+    <Button
+        android:id="@+id/butProceedPermissions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Proceed" />
+
+
+</LinearLayout>
+
+
