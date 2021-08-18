@@ -35,8 +35,6 @@ public class ActivityEmergencyContacts extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_emergency_contacts);
 
-        //@Override
-
         // this button is used for ease for debugging, instead of manually inputting data, just
         // press this and it will set Rich and Nick as default emergency contacts
         Button butDefaultContact = findViewById(R.id.butDefaultContact);
@@ -58,7 +56,7 @@ public class ActivityEmergencyContacts extends AppCompatActivity {
 
                 AddDataToContactTxt(); // Add emergency contacts to EmergencyContactInfo.txt
 
-                // proceed to ActivityCrashDetection
+                // proceed to ActivityCrashDetection once data is stored into corresponding txt files
                 Intent intent = new Intent(ActivityEmergencyContacts.this, ActivityCrashDetection.class);
                 startActivity(intent);
             }

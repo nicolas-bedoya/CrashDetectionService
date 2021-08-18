@@ -47,6 +47,7 @@ import static com.example.crashdetectionservice.ActivityNotification.CHANNEL_ID;
 
 
 public class ActivityService extends Service implements LocationListener, SensorEventListener {
+
     protected Context context;
     //this.findViewById(android.R.id.content)
     private static final int TIMEOUT = 10; // units seconds
@@ -60,18 +61,21 @@ public class ActivityService extends Service implements LocationListener, Sensor
     Sensor accelerometer, gyroscope;
     double xA, yA, zA;
     double xG, yG, zG;
+    double xA_kalman, yA_kalman, zA_kalman; // variables that will be used to store the kalman filter of xA,yA,zA
+    double xG_kalman, yG_kalman, zG_kalman; // variable that will be used to store the kalman filter of xG,yG,zG
+
     double[] accelerationData = {0,0,0};
     double[] gyroscopeData = {0,0,0};
 
     protected LocationManager locationManager;
     boolean isBound = false;
 
-    boolean impactAccelerometer = false;
-    boolean impactGyroscope = false;
+    boolean impactAccelerometer = false; // true/false statement to detect large acceleration
+    boolean impactGyroscope = false; // true/false statement to detect large angular velocity
 
     double longitude, latitude, speed;
     String address;
-    ArrayList<String> LocationPacket = new ArrayList<String>();
+    ArrayList<String> LocationPacket = new ArrayList<String>(); // used to send to broadcast receiver in ActivityCrashDetection
 
     @Override
     public void onCreate() {
@@ -95,13 +99,14 @@ public class ActivityService extends Service implements LocationListener, Sensor
         sensorManager.registerListener(ActivityService.this, accelerometer, DELAY);
         sensorManager.registerListener(ActivityService.this, gyroscope, DELAY);
 
+        // if acceleration file doesn't exist, then create it
         if (!accelerationFile.exists()) {
            CreateSensorFile(ACCELERATION_DATA_FILE_NAME);
         }
+        // if gyroscope file doesn't exist, then create it
         if (!gyroscopeFile.exists()) {
             CreateSensorFile(GYROSCOPE_DATA_FILE_NAME);
         }
-
     }
 
     @Nullable

@@ -20,7 +20,7 @@ public class ActivityNotification extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        createNotificationChannel();
+        createNotificationChannel(); // notification channel for crash detection related notifications
     }
 
     private void createNotificationChannel() {

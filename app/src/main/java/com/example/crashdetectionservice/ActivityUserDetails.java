@@ -39,16 +39,16 @@ public class ActivityUserDetails extends Activity {
             @SuppressLint("LongLogTag")
             @Override
             public void onClick(View v) {
-                boolean phoneNumberSatisfied = false;
-                boolean nameSatisfied = false;
+                boolean phoneNumberSatisfied = false;  // true/false used to determine if phone number is valid in if statements
+                boolean nameSatisfied = false; // true/false used to determine if the name is valid
 
                 txtUserFirstName = (EditText)findViewById(R.id.editTextFirstName);
                 txtUserLastName = (EditText)findViewById(R.id.editTextLastName);
                 txtUserPhoneNumber = (EditText)findViewById(R.id.editTextPhoneNumber);
 
-                userFirstName = txtUserFirstName.getText().toString();
-                userLastName = txtUserLastName.getText().toString();
-                userPhoneNumber = txtUserPhoneNumber.getText().toString();
+                userFirstName = txtUserFirstName.getText().toString(); // stores first name of the user
+                userLastName = txtUserLastName.getText().toString(); // stores surname of user
+                userPhoneNumber = txtUserPhoneNumber.getText().toString(); // stores phone number of user
 
                 // check to see if all entries to user input is filled
                 if (userFirstName.length() == 0 || userLastName.length() == 0 || userPhoneNumber.length() == 0) {
@@ -86,6 +86,7 @@ public class ActivityUserDetails extends Activity {
 
     }
 
+    // function to create text file for user
     @SuppressLint("LongLogTag")
     public void CreateUserContactTxtFile() {
         FileOutputStream fos = null;
@@ -107,6 +108,7 @@ public class ActivityUserDetails extends Activity {
         }
     }
 
+    // function to store the data onto phone
     @SuppressLint("LongLogTag")
     public void AddDataUserContactTxtFile() {
         FileOutputStream fos = null;

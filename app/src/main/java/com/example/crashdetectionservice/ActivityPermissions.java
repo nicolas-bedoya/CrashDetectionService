@@ -40,45 +40,52 @@ public class ActivityPermissions extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_permissions);
 
+        // checking for fine location permission
+        // fine location will be used to determine the address of the user, as well as obtain a velocity
+        // of the travel
         Switch switchFineLocation = findViewById(R.id.switchFineLocation);
         switchFineLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED);
-                        else {
-                            requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION},1);
+                        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            // request user to accept permission if it has not been approved
+                            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                         }
+
                     }
                 }
             }
         });
 
+        // checking for sms permission
+        // this permission will be used to send sms of user details in case of a crash detected
         Switch switchSMS = findViewById(R.id.switchSMS);
         switchSMS.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED);
-                        else {
-                            requestPermissions(new String[] {Manifest.permission.SEND_SMS},1);
+                        if (checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                            // request user to accept permission if it has not been approved
+                            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, 1);
                         }
+
                     }
                 }
             }
         });
-
+        // permission used to write data (txt files) into external storage of phone
+        // this will be used to store acceleration and gyroscope data for sensor analysis
         Switch switchExternalStorage = findViewById(R.id.switchExternalStorage);
         switchExternalStorage.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-                            ;
-                        else {
+                        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                            // request permission if it has not yet been approved
                             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
                         }
                     }

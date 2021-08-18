@@ -46,7 +46,7 @@ public class ActivityCrashDetection extends AppCompatActivity {
     String emergencyFirstName2, emergencyLastName2, emergencyPhone2;
     String longitude, latitude, address;
 
-    boolean isBound = false;
+    //boolean isBound = false;
     ArrayList<String> LocationPacket = new ArrayList<String>();
 
     NotificationManagerCompat notificationManager;
@@ -284,11 +284,12 @@ public class ActivityCrashDetection extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         Intent intent = new Intent(this, ActivityService.class);
+        // unregister broadcast receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-        if (isBound) {
+       /* if (isBound) {
             isBound = false;
-        }
-        stopService(intent);
+        } */
+        stopService(intent); // kill service if on destroy is called, ie. app is removed in task manager
         super.onDestroy();
     }
 
