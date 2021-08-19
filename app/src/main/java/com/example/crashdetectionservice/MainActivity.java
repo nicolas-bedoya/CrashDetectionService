@@ -1,8 +1,10 @@
 package com.example.crashdetectionservice;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -23,7 +25,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     // bool statement used to determine if the user has accepted all permissions related to the app
-    boolean permissionsComplete;
+    boolean permissionsComplete = true;
+
+    String[] PERMISSIONS = {
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.SEND_SMS
+    };
 
     // ACCELERATION... and GYROSCOPE... used to store data from accelerometer in the format of csv
     // this is done so I can load the data into debug terminal so I can transfer data into MATLAB for graphing
@@ -33,13 +41,29 @@ public class MainActivity extends AppCompatActivity {
     private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt"; // stores emergency contact info
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Checking if all related permissions have not accepted by user
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                    checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED ||
+                    checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                Log.d(TAG, "permissions have not been ticked, permissionsComplete : " + permissionsComplete);
+                requestPermissions(PERMISSIONS, 1);
+                Log.d(TAG, "permission hello world");
+            }
+
+        }
+
+
         Button butProceed = findViewById(R.id.butProceed);
         butProceed.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View v) {
                 File userContactFile = getFileStreamPath(USER_CONTACT_FILE_NAME);
@@ -47,26 +71,16 @@ public class MainActivity extends AppCompatActivity {
                 File accelerationFile = getFileStreamPath(ACCELERATION_DATA_FILE_NAME);
                 File gyroscopeFile = getFileStreamPath(GYROSCOPE_DATA_FILE_NAME);
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    // Checking if all related permissions have not accepted by user
-                    if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-                            checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED ||
-                            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                            checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                        permissionsComplete = false;
-                        Log.d(TAG, "permissions have not been ticked, permissionsComplete : " + permissionsComplete);
-                        // Takes user to a permission activity to approve permissions
-                        Intent intent = new Intent(MainActivity.this, ActivityPermissions.class);
-                        startActivity(intent);
-
-                    } else {
-                        permissionsComplete = true;
-                        Log.d(TAG, "permissions have been ticked");
-                    }
+                // if all permissions have been accepted
+                if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                        checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED ||
+                        checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    permissionsComplete = false;
+                    AlertDialog();
+                } else {
+                    permissionsComplete = true;
                 }
 
-                // if all permissions have been accepted
                 if (permissionsComplete) {
                     Log.d(TAG, "permissionsComplete is true : " + permissionsComplete);
 
@@ -98,6 +112,28 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void AlertDialog() {
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Permissions!")
+                .setMessage("Ensure that all permissions are approved. Press OK to approve the permissions, then press Proceed.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.M)
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        requestPermissions(PERMISSIONS,1);
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        Log.d(TAG, "dismiss called");
+                    }
+                })
+                .create();
+        dialog.show();
     }
 
     // takes string argument which relates to the file being scanned
