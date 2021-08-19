@@ -164,7 +164,6 @@ public class ActivityService extends Service implements LocationListener, Sensor
             impactGyroscope = false;
 
         }
-
     }
 
     @Override
@@ -181,7 +180,6 @@ public class ActivityService extends Service implements LocationListener, Sensor
                 impactGyroscope = true;
                 Log.d(TAG, "impactGyroscope true");
             }
-
         }
 
         else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER && impactAccelerometer == false) {
@@ -197,7 +195,6 @@ public class ActivityService extends Service implements LocationListener, Sensor
                 Log.d(TAG, "impactAccelerometer true");
             }
         }
-
     }
 
     @Override

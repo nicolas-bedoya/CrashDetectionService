@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 if (permissionsComplete) {
                     Log.d(TAG, "permissionsComplete is true : " + permissionsComplete);
 
-                    // if userContactFile has not been created then take user to set up details in ActivityUserDetails
+                    // if userContactFile is not created then take user to set up details in ActivityUserDetails
                     if (!userContactFile.exists()) {
                         Intent intent = new Intent(MainActivity.this, ActivityUserDetails.class);
                         startActivity(intent);
