@@ -21,7 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     private static final String TAG = "MainActivity";
 
     // bool statement used to determine if the user has accepted all permissions related to the app
@@ -55,63 +55,13 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.d(TAG, "permissions have not been ticked, permissionsComplete : " + permissionsComplete);
                 requestPermissions(PERMISSIONS, 1);
-                Log.d(TAG, "permission hello world");
             }
 
         }
 
-
         Button butProceed = findViewById(R.id.butProceed);
-        butProceed.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.M)
-            @Override
-            public void onClick(View v) {
-                File userContactFile = getFileStreamPath(USER_CONTACT_FILE_NAME);
-                File emergencyContactFile = getFileStreamPath(EMERGENCY_CONTACT_FILE_NAME);
-                File accelerationFile = getFileStreamPath(ACCELERATION_DATA_FILE_NAME);
-                File gyroscopeFile = getFileStreamPath(GYROSCOPE_DATA_FILE_NAME);
+        butProceed.setOnClickListener(this);
 
-                // if all permissions have been accepted
-                if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-                        checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED ||
-                        checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    permissionsComplete = false;
-                    AlertDialog();
-                } else {
-                    permissionsComplete = true;
-                }
-
-                if (permissionsComplete) {
-                    Log.d(TAG, "permissionsComplete is true : " + permissionsComplete);
-
-                    // if userContactFile is not created then take user to set up details in ActivityUserDetails
-                    if (!userContactFile.exists()) {
-                        Intent intent = new Intent(MainActivity.this, ActivityUserDetails.class);
-                        startActivity(intent);
-                    }
-                    // else if emergencyContactFile has not been created then take user to set up details in ActivityEmergencyContacts
-                    else if (!emergencyContactFile.exists()) {
-                        Intent intent = new Intent(MainActivity.this, ActivityEmergencyContacts.class);
-                        startActivity(intent);
-                    }
-                    // else all required text files have been created, go to ActivityCrashDetection
-                    else {
-                        Intent intent = new Intent(MainActivity.this, ActivityCrashDetection.class);
-                        startActivity(intent);
-                    }
-                    // load previous acceleration for plotting
-                    if (accelerationFile.exists()) {
-                        LoadTxtSensorFile(ACCELERATION_DATA_FILE_NAME);
-                    }
-                    // load previous gyroscope for plotting
-                    if (gyroscopeFile.exists()) {
-                        LoadTxtSensorFile(GYROSCOPE_DATA_FILE_NAME);
-                    }
-                }
-
-
-            }
-        });
     }
 
     private void AlertDialog() {
@@ -166,9 +116,59 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @Override
+    public void onClick(View v) {
+        // because there are no other buttons, no other cases will have to be considered
+        // i.e. using switch->case
+        File userContactFile = getFileStreamPath(USER_CONTACT_FILE_NAME);
+        File emergencyContactFile = getFileStreamPath(EMERGENCY_CONTACT_FILE_NAME);
+        File accelerationFile = getFileStreamPath(ACCELERATION_DATA_FILE_NAME);
+        File gyroscopeFile = getFileStreamPath(GYROSCOPE_DATA_FILE_NAME);
+
+        // if all permissions have been accepted
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED ||
+                checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsComplete = false;
+            AlertDialog();
+        } else {
+            permissionsComplete = true;
+        }
+
+        if (permissionsComplete) {
+            Log.d(TAG, "permissionsComplete is true : " + permissionsComplete);
+
+            // if userContactFile is not created then take user to set up details in ActivityUserDetails
+            if (!userContactFile.exists()) {
+                Intent intent = new Intent(MainActivity.this, ActivityUserDetails.class);
+                startActivity(intent);
+            }
+            // else if emergencyContactFile has not been created then take user to set up details in ActivityEmergencyContacts
+            else if (!emergencyContactFile.exists()) {
+                Intent intent = new Intent(MainActivity.this, ActivityEmergencyContacts.class);
+                startActivity(intent);
+            }
+            // else all required text files have been created, go to ActivityCrashDetection
+            else {
+                Intent intent = new Intent(MainActivity.this, ActivityCrashDetection.class);
+                startActivity(intent);
+            }
+            // load previous acceleration for plotting
+            if (accelerationFile.exists()) {
+                LoadTxtSensorFile(ACCELERATION_DATA_FILE_NAME);
+            }
+            // load previous gyroscope for plotting
+            if (gyroscopeFile.exists()) {
+                LoadTxtSensorFile(GYROSCOPE_DATA_FILE_NAME);
+            }
+        }
+    }
+
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy called");
         super.onDestroy();
     }
 }
+

@@ -59,10 +59,10 @@ public class ActivityService extends Service implements LocationListener, Sensor
 
     private SensorManager sensorManager;
     Sensor accelerometer, gyroscope;
-    double xA, yA, zA;
-    double xG, yG, zG;
-    double xA_kalman, yA_kalman, zA_kalman; // variables that will be used to store the kalman filter of xA,yA,zA
-    double xG_kalman, yG_kalman, zG_kalman; // variable that will be used to store the kalman filter of xG,yG,zG
+    double xA = 0, yA = 0, zA = 0;
+    double xG = 0, yG = 0, zG = 0;
+    double xA_kalman = 0, yA_kalman = 0, zA_kalman = 0; // variables that will be used to store the kalman filter of xA,yA,zA
+    double xG_kalman = 0, yG_kalman = 0, zG_kalman = 0; // variable that will be used to store the kalman filter of xG,yG,zG
 
     double[] accelerationData = {0,0,0};
     double[] gyroscopeData = {0,0,0};
