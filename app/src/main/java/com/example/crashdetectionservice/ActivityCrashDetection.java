@@ -23,6 +23,7 @@ import android.os.IBinder;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 
 import static com.example.crashdetectionservice.ActivityNotification.CHANNEL_ID;
 
-public class ActivityCrashDetection extends AppCompatActivity {
+public class ActivityCrashDetection extends AppCompatActivity implements View.OnClickListener{
     private static final String TAG = "ActivityCrashDetection";
     private static final String USER_CONTACT_FILE_NAME = "UserContactInfo.txt";
     private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
@@ -59,6 +60,13 @@ public class ActivityCrashDetection extends AppCompatActivity {
         LoadEmergencyContactTxtFile();
         LoadUserContactTxtFile();
 
+        Button butStartService = findViewById(R.id.butStartService);
+        butStartService.setOnClickListener(this);
+
+        Button butEndService = findViewById(R.id.butEndService);
+        butEndService.setOnClickListener(this);
+
+
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("alert-dialog-request"));
 
@@ -81,6 +89,7 @@ public class ActivityCrashDetection extends AppCompatActivity {
         }
     };
 
+    /*
     //method called when start button pressed
     public void startService(View view) {
         Intent intent = new Intent(this, ActivityService.class);
@@ -94,6 +103,8 @@ public class ActivityCrashDetection extends AppCompatActivity {
         Intent intent = new Intent(this, ActivityService.class);
         stopService(intent);
     }
+
+     */
 
     //called from broadcastReceiver
     private void CrashNotification() {
@@ -282,15 +293,30 @@ public class ActivityCrashDetection extends AppCompatActivity {
     }
 
     @Override
+    public void onClick(View v) {
+        Button b = (Button) v;
+        Intent intent = new Intent(this, ActivityService.class);
+        switch(b.getId()) {
+            case R.id.butStartService:
+                startService(intent);
+                Log.d(TAG, "startService method called");
+                break;
+
+            case R.id.butEndService:
+                stopService(intent);
+                break;
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         Intent intent = new Intent(this, ActivityService.class);
         // unregister broadcast receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-       /* if (isBound) {
-            isBound = false;
-        } */
+
         stopService(intent); // kill service if on destroy is called, ie. app is removed in task manager
         super.onDestroy();
     }
+
 
 }

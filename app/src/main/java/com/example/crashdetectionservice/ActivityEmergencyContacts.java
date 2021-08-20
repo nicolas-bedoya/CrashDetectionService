@@ -18,7 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class ActivityEmergencyContacts extends AppCompatActivity {
+public class ActivityEmergencyContacts extends AppCompatActivity implements View.OnClickListener{
     private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
 
     public Button button;
@@ -38,10 +38,58 @@ public class ActivityEmergencyContacts extends AppCompatActivity {
         // this button is used for ease for debugging, instead of manually inputting data, just
         // press this and it will set Rich and Nick as default emergency contacts
         Button butDefaultContact = findViewById(R.id.butDefaultContact);
-        butDefaultContact.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        butDefaultContact.setOnClickListener(this);
 
+        //@Override
+        Button butSensor = findViewById(R.id.butSensor);
+        butSensor.setOnClickListener(this);
+
+    }
+
+    public void AddDataToContactTxt() {
+        String firstName1 = FirstName1 + "\n";
+        String lastName1 = LastName1 + "\n";
+        String phoneNumber1 = PhoneNumber1 + "\n";
+
+        String firstName2 = FirstName2 + "\n";
+        String lastName2 = LastName2 + "\n";
+        String phoneNumber2 = PhoneNumber2 + "\n";
+
+        FileOutputStream fos = null;
+        // Add data line by line into text file
+        try {
+            fos = openFileOutput(EMERGENCY_CONTACT_FILE_NAME, MODE_APPEND);
+            fos.write(firstName1.getBytes());
+            fos.write(lastName1.getBytes());
+            fos.write(phoneNumber1.getBytes());
+            fos.write(firstName2.getBytes());
+            fos.write(lastName2.getBytes());
+            fos.write(phoneNumber2.getBytes());
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                    Log.d(TAG, "txt added");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        Button b = (Button) v;
+        Intent intent = new Intent(ActivityEmergencyContacts.this, ActivityCrashDetection.class);
+
+        switch (b.getId()) {
+            case R.id.butDefaultContact:
                 FirstName2 = (String) "Richard";
                 LastName2 = (String) "Liang";
                 PhoneNumber2 = (String) "0469896996";
@@ -57,17 +105,10 @@ public class ActivityEmergencyContacts extends AppCompatActivity {
                 AddDataToContactTxt(); // Add emergency contacts to EmergencyContactInfo.txt
 
                 // proceed to ActivityCrashDetection once data is stored into corresponding txt files
-                Intent intent = new Intent(ActivityEmergencyContacts.this, ActivityCrashDetection.class);
                 startActivity(intent);
-            }
-        });
+                break;
 
-        //@Override
-        Button butSensor = findViewById(R.id.butSensor);
-        butSensor.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
+            case R.id.butSensor:
                 boolean phone_number_satisfied = false;
                 boolean name_satisfied = false;
                 first_name1 = (EditText)findViewById(R.id.editTextFirstName1);
@@ -118,50 +159,10 @@ public class ActivityEmergencyContacts extends AppCompatActivity {
                         Log.d(TAG, "FN: " + FirstName1 + " SN: " + LastName1 + " PN: " + PhoneNumber1 );
                         Log.d(TAG, "PN.length: " + PhoneNumber1.length());
                         AddDataToContactTxt();
-                        Intent intent = new Intent(ActivityEmergencyContacts.this, ActivityCrashDetection.class);
                         startActivity(intent);
                     }
                 }
-            }
-        });
-
-    }
-
-    public void AddDataToContactTxt() {
-        String firstName1 = FirstName1 + "\n";
-        String lastName1 = LastName1 + "\n";
-        String phoneNumber1 = PhoneNumber1 + "\n";
-
-        String firstName2 = FirstName2 + "\n";
-        String lastName2 = LastName2 + "\n";
-        String phoneNumber2 = PhoneNumber2 + "\n";
-
-        FileOutputStream fos = null;
-        // Add data line by line into text file
-        try {
-            fos = openFileOutput(EMERGENCY_CONTACT_FILE_NAME, MODE_APPEND);
-            fos.write(firstName1.getBytes());
-            fos.write(lastName1.getBytes());
-            fos.write(phoneNumber1.getBytes());
-            fos.write(firstName2.getBytes());
-            fos.write(lastName2.getBytes());
-            fos.write(phoneNumber2.getBytes());
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                    Log.d(TAG, "txt added");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+                break;
         }
     }
-
-
 }

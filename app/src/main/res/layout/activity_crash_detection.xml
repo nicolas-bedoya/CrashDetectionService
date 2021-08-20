@@ -21,15 +21,13 @@
         android:id="@+id/butStartService"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start service"
-        android:onClick="startService"/>
+        android:text="Start service"/>
 
     <Button
         android:id="@+id/butEndService"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="End service"
-        android:onClick="endService"/>
+        android:text="End service"/>
 
 
 </LinearLayout>
