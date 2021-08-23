@@ -18,6 +18,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CrashDetectionService">
         <activity android:name=".ActivityEmergencyContacts"/>
+        <activity android:name=".ActivityEmergency1"/>
+        <activity android:name="ActivityEmergency2"/>
         <activity android:name=".ActivityCrashDetection"/>
         <activity android:name=".ActivityUserDetails"/>
         <activity android:name=".MainActivity">

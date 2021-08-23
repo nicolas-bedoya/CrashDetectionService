@@ -12,22 +12,31 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Crash Detection (service)"
+        android:text="Crash Detection"
         tools:layout_editor_absoluteX="76dp"
         tools:layout_editor_absoluteY="38dp"
         tools:textSize="36dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Before you commence your ride, press 'START RIDE'. The application will then use the accelerometer, gyroscope and GPS to determine if you have experienced a crash.
+If a crash is suspected, an alert dialog appears for 120 seconds to confirm whether you have or have not crashed. If there is no response from you, then a text message will be sent to emergency contacts.
+Once you have finished your ride press 'END RIDE'."
+        tools:layout_editor_absoluteX="15dp"
+        tools:layout_editor_absoluteY="142dp" />
 
     <Button
         android:id="@+id/butStartService"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start service"/>
+        android:text="Start Ride "/>
 
     <Button
         android:id="@+id/butEndService"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="End service"/>
+        android:text="End Ride"/>
 
 
 </LinearLayout>
