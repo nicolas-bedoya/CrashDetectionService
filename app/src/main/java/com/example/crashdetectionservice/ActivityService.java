@@ -276,6 +276,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
     public void onDestroy() {
         Log.d(TAG, "onDestroy LocationServices called");
         isBound = false;
+        stopForeground(true);
         stopSelf();
         super.onDestroy();
     }
