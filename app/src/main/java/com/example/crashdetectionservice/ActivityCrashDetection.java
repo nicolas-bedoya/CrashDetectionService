@@ -294,17 +294,18 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
     @Override
     public void onClick(View v) {
-        Button b = (Button) v;
-        Intent intent = new Intent(this, ActivityService.class);
-        switch(b.getId()) {
-            case R.id.butStartService:
-                startService(intent);
-                Log.d(TAG, "startService method called");
-                break;
-
-            case R.id.butEndService:
-                stopService(intent);
-                break;
+        int id = v.getId();
+        if(id == R.id.butStartService) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(new Intent(this, ActivityService.class));
+            } else {
+                startService(new Intent(this, ActivityService.class));
+            }
+            Log.d(TAG, "startService method called");
+        }
+        else if(id == R.id.butEndService) {
+            stopService(new Intent(this, ActivityService.class));
+            Log.d(TAG, "stopService method called");
         }
     }
 
