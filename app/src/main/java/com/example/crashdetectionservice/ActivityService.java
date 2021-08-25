@@ -275,7 +275,17 @@ public class ActivityService extends Service implements LocationListener, Sensor
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy LocationServices called");
+
+        // Unregister SensorManager listeners.
+        sensorManager.unregisterListener(this, accelerometer);
+        sensorManager.unregisterListener(this, gyroscope);
+
+        // Cease listening for location updates.
+        locationManager.removeUpdates(this);
+
         isBound = false;
+
+        // Kill off the foreground service.
         stopForeground(true);
         stopSelf();
         super.onDestroy();
