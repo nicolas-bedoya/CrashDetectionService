@@ -32,6 +32,7 @@ Once you have finished your ride press 'END RIDE'."
         android:layout_height="wrap_content"
         android:text="Start Ride "/>
 
+
     <Button
         android:id="@+id/butEndService"
         android:layout_width="wrap_content"

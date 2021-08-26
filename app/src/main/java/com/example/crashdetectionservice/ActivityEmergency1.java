@@ -16,7 +16,7 @@ public class ActivityEmergency1 extends AppCompatActivity implements View.OnClic
 
     EditText first_name1, last_name1, phone_number1;
     private static final String TAG = ".ActivityEmergency1";
-    public static String[] emergency1 = {" "," "," "};
+    public static String[] emergency1 = new String[3];
 
     String FirstName1, LastName1, PhoneNumber1;
 

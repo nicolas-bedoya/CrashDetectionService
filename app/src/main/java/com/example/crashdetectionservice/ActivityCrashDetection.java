@@ -24,6 +24,7 @@ import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -66,10 +67,6 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         Button butEndService = findViewById(R.id.butEndService);
         butEndService.setOnClickListener(this);
 
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter("alert-dialog-request"));
-
     }
 
     // broadcast receiver from ActivityService
@@ -88,23 +85,6 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
             AlertDialog(); // function called to provide a dialog, requesting user to respond
         }
     };
-
-    /*
-    //method called when start button pressed
-    public void startService(View view) {
-        Intent intent = new Intent(this, ActivityService.class);
-        startService(intent);
-
-        Log.d(TAG, "startService method called");
-    }
-
-    //method called when end button pressed from activity_crash_detection.xml (layout file)
-    public void endService(View view) {
-        Intent intent = new Intent(this, ActivityService.class);
-        stopService(intent);
-    }
-
-     */
 
     //called from broadcastReceiver
     private void CrashNotification() {
@@ -125,6 +105,8 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
     }
 
     private void AlertDialog() {
+        Intent intent = new Intent("activate-sensor-request");
+        Intent serviceIntent = new Intent(this, ActivityService.class);
         Log.d(TAG, "Alert dialogue - latitude: " + latitude + " longitude: " + longitude + " address: " + address);
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("WARNING")
@@ -132,6 +114,8 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiver);
+                        stopService(serviceIntent); // stop service if crash is detected
                         SendSMS(); // user pressed yes, therefore SMS will be sent to emergency contacts
                         dialog.dismiss(); // dialog removed
                     }
@@ -139,6 +123,8 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 .setNegativeButton("Dismiss", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        // send request to re-register listeners to continue to checking sensors/location
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(intent);
                         dialog.dismiss();
                         Log.d(TAG, "dismiss called");
                     }
@@ -298,12 +284,16 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         Intent intent = new Intent(this, ActivityService.class);
         switch(b.getId()) {
             case R.id.butStartService:
+                LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                        new IntentFilter("alert-dialog-request"));
                 startService(intent);
                 Log.d(TAG, "startService method called");
                 break;
 
             case R.id.butEndService:
+                Log.d(TAG, "Stop service button called");
                 stopService(intent);
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
                 break;
         }
     }
@@ -313,7 +303,6 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         Intent intent = new Intent(this, ActivityService.class);
         // unregister broadcast receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-
         stopService(intent); // kill service if on destroy is called, ie. app is removed in task manager
         super.onDestroy();
     }
