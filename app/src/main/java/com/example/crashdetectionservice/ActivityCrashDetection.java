@@ -16,6 +16,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,26 +34,37 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import com.example.crashdetectionservice.ActivityService.LocalBinder;
+
 
 import static com.example.crashdetectionservice.ActivityNotification.CHANNEL_ID;
 
-public class ActivityCrashDetection extends AppCompatActivity implements View.OnClickListener{
+public class ActivityCrashDetection extends AppCompatActivity implements View.OnClickListener /*, MyCallback*/{
+
+    ActivityService LocationSensorService;
+    boolean isBound = false;
+
     private static final String TAG = "ActivityCrashDetection";
     private static final String USER_CONTACT_FILE_NAME = "UserContactInfo.txt";
     private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
     private static final int TIMEOUT = 120; // units seconds
     private Context context;
 
+    Runnable runnableImpactCheck;
     String userFirstName, userLastName, userPhone;
     String emergencyFirstName1, emergencyLastName1, emergencyPhone1;
     String emergencyFirstName2, emergencyLastName2, emergencyPhone2;
     String longitude, latitude, address;
+    String[] LocationString = new String[3];
 
     //boolean isBound = false;
     ArrayList<String> LocationPacket = new ArrayList<String>();
 
     NotificationManagerCompat notificationManager;
 
+    int impactVelocityTimer = 0, impactSensorTimer = 0;
+    boolean impactVelocity = false, impactAccelerometer = false, impactGyroscope = false, crashDetected = false;
+    boolean ActivityServiceEnd = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,24 +79,46 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         Button butEndService = findViewById(R.id.butEndService);
         butEndService.setOnClickListener(this);
 
+        TextView txtSpeed = findViewById(R.id.txtSpeed);
+        TextView txtAngularVelocity = findViewById(R.id.txtAngularVelocity);
+        TextView txtAcceleration = findViewById(R.id.txtAcceleration);
+
     }
 
+    private ServiceConnection LocationSensorConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            LocalBinder binder = (LocalBinder) service;
+            LocationSensorService = binder.getService();
+            isBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
+
     // broadcast receiver from ActivityService
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mMessageReceiverCrashCheck = new BroadcastReceiver() {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive called");
-            // Data that is sent through broadcast receiver is of type string Array list
-            LocationPacket = intent.getStringArrayListExtra("LocationPacket");
-            latitude = LocationPacket.get(0);
-            longitude = LocationPacket.get(1);
-            address = LocationPacket.get(2);
-
-            CrashNotification(); // function called to notify user of whether crash has occurred
-            AlertDialog(); // function called to provide a dialog, requesting user to respond
+            CrashDetectionCheck();
         }
     };
+
+    private BroadcastReceiver mMessageReceiverServiceEnd = new BroadcastReceiver() {
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive called");
+            ActivityServiceEnd = true;
+        }
+    };
+
+
 
     //called from broadcastReceiver
     private void CrashNotification() {
@@ -114,8 +148,11 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiver);
-                        stopService(serviceIntent); // stop service if crash is detected
+                        stopService(serviceIntent);
+                        unbindService(LocationSensorConnection);
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverCrashCheck);
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverServiceEnd);
+                        ActivityServiceEnd = true;
                         SendSMS(); // user pressed yes, therefore SMS will be sent to emergency contacts
                         dialog.dismiss(); // dialog removed
                     }
@@ -124,19 +161,22 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // send request to re-register listeners to continue to checking sensors/location
+                        crashDetected = false;
                         LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(intent);
+                        // LocationSensorService.registerUpdates();
                         dialog.dismiss();
                         Log.d(TAG, "dismiss called");
+                        CrashDetectionCheck();
                     }
                 })
                 .create();
 
         dialog.show();
 
-        // timer added to alertDialog with a time of 120 seconds
+        // timer added to alertDialog with a time of 120 second
         Handler handler = new Handler();
         final Runnable runnable = new Runnable() {
-            int timeout = TIMEOUT;
+            int timeout = 10;//TIMEOUT
             @Override
             public void run() {
                 if(!dialog.isShowing()) {
@@ -152,8 +192,13 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 else {
                     if (dialog.isShowing()) {
                         Log.d(TAG, "Timeout.");
-                        dialog.dismiss();
-                        SendSMS(); // send SMS to emergency contacts with user details
+                        stopService(serviceIntent);
+                        unbindService(LocationSensorConnection);
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverCrashCheck);
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverServiceEnd);
+                        ActivityServiceEnd = true;
+                        SendSMS(); // user pressed yes, therefore SMS will be sent to emergency contacts
+                        dialog.dismiss(); // dialog removed
                     }
                 }
 
@@ -278,22 +323,100 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         }
     }
 
+    public void CrashDetectionCheck() {
+        crashDetected = false;
+        Handler handler = new Handler();
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                impactVelocity = LocationSensorService.impactVelocity;
+                impactAccelerometer = LocationSensorService.impactAccelerometer;
+                impactGyroscope = LocationSensorService.impactGyroscope;
+
+                Log.d(TAG, "crash flags: " + impactVelocity + " " + impactAccelerometer + " "+ impactGyroscope);
+
+                if (impactVelocity) {
+                    if (impactVelocityTimer < 4) {
+                        impactVelocityTimer++;
+                    } else {
+                        impactVelocityTimer = 0;
+                        LocationSensorService.impactVelocity = false;
+                    }
+                }
+
+                if ((impactAccelerometer || impactGyroscope)) {
+                    impactVelocity = true; // remove this immediately
+                    if (impactSensorTimer < 4) {
+                        impactSensorTimer++;
+                        // check if there is reliable signal strength to determine a valid speed
+                        if (impactVelocity) {
+                            LocationSensorService.impactVelocity = false;
+                            LocationSensorService.impactAccelerometer = false;
+                            LocationSensorService.impactGyroscope = false;
+                            LocationSensorService.impactSensorTimer = 0;
+                            LocationSensorService.impactVelocityTimer = 0;
+
+                            LocationString = LocationSensorService.getCompleteAddressString();
+                            address = LocationString[0];
+                            latitude = LocationString[1];
+                            longitude = LocationString[2];
+                            crashDetected = true;
+
+                        }
+
+                    } else {
+                        impactSensorTimer = 0;
+                        impactVelocityTimer = 0;
+                        LocationSensorService.impactAccelerometer = false;
+                        LocationSensorService.impactGyroscope = false;
+                    }
+                }
+
+                if (crashDetected) {
+                    Log.d(TAG, "Crash detected activated");
+                    Intent unregisterUpdateIntent = new Intent("unregister-sensor-request");
+                    LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(unregisterUpdateIntent);
+
+                    CrashNotification();
+                    AlertDialog();
+                }
+
+                if(!crashDetected && !ActivityServiceEnd) {
+                    //Log.d(TAG, "Delayed applied to crashDetectionCheck");
+                    handler.postDelayed(this, 1000); // delay of 1 second
+                }
+            }
+        };
+        //Log.d(TAG, "CrashDetectionCheck complete");
+        handler.post(runnable);
+    }
+
     @Override
     public void onClick(View v) {
         Button b = (Button) v;
         Intent intent = new Intent(this, ActivityService.class);
         switch(b.getId()) {
             case R.id.butStartService:
-                LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                        new IntentFilter("alert-dialog-request"));
-                startService(intent);
                 Log.d(TAG, "startService method called");
+
+                LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverCrashCheck,
+                        new IntentFilter("start-crash-detection-check"));
+
+                LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverServiceEnd,
+                        new IntentFilter("end-crash-check"));
+
+                startService(intent);
+                bindService(intent, LocationSensorConnection, Context.BIND_AUTO_CREATE);
+                ActivityServiceEnd = false;
                 break;
 
             case R.id.butEndService:
                 Log.d(TAG, "Stop service button called");
+                unbindService(LocationSensorConnection);
                 stopService(intent);
-                LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverCrashCheck);
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverServiceEnd);
+                ActivityServiceEnd = true;
                 break;
         }
     }
@@ -301,11 +424,15 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
     @Override
     protected void onDestroy() {
         Intent intent = new Intent(this, ActivityService.class);
-        // unregister broadcast receiver
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        ActivityServiceEnd = true;
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverCrashCheck);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverServiceEnd);
+        if (!isBound) {
+            unbindService(LocationSensorConnection); // check if service is bounded before unbinding
+        }
+        //unbindService(LocationSensorConnection); // check if service is bounded before unbinding
         stopService(intent); // kill service if on destroy is called, ie. app is removed in task manager
         super.onDestroy();
     }
-
 
 }

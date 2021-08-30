@@ -24,7 +24,7 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
 
     public Button button;
     public EditText editText;
-
+    boolean CustomContacts = false, DefaultContact = false;
     // since 2 emergency contacts are going to be added, there are 2 sets of data that we keep record of
     // hence, first_name1 and first_name2 etc.
     private static final String TAG = "ActivityEmergencyContacts";
@@ -54,13 +54,15 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
 
     @SuppressLint("LongLogTag")
     public void AddDataToContactTxt() {
-        FirstName1 = ActivityEmergency1.emergency1[0];
-        LastName1 = ActivityEmergency1.emergency1[1];
-        PhoneNumber1 = ActivityEmergency1.emergency1[2];
+        if (CustomContacts) {
+            FirstName1 = ActivityEmergency1.emergency1[0];
+            LastName1 = ActivityEmergency1.emergency1[1];
+            PhoneNumber1 = ActivityEmergency1.emergency1[2];
 
-        FirstName2 = ActivityEmergency2.emergency2[0];
-        LastName2 = ActivityEmergency2.emergency2[1];
-        PhoneNumber2 = ActivityEmergency2.emergency2[2];
+            FirstName2 = ActivityEmergency2.emergency2[0];
+            LastName2 = ActivityEmergency2.emergency2[1];
+            PhoneNumber2 = ActivityEmergency2.emergency2[2];
+        }
 
         String firstName1 = FirstName1 + "\n";
         String lastName1 = LastName1 + "\n";
@@ -118,6 +120,7 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
                 Log.d(TAG, "FN2: " + FirstName2 + " SN2: " + LastName2 + " PN2: " + PhoneNumber2 );
                 Log.d(TAG, "PN1.length: " + PhoneNumber1.length());
 
+                DefaultContact = true;
                 AddDataToContactTxt(); // Add emergency contacts to EmergencyContactInfo.txt
 
                 // proceed to ActivityCrashDetection once data is stored into corresponding txt files
@@ -125,6 +128,7 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
                 break;
 
             case R.id.butSaveEmergencyContacts:
+                CustomContacts = true;
                 AddDataToContactTxt();
                 startActivity(intent);
                 break;

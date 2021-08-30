@@ -33,6 +33,24 @@ Once you have finished your ride press 'END RIDE'."
         android:text="Start Ride "/>
 
 
+    <TextView
+        android:id="@+id/txtSpeed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Speed: " />
+
+    <TextView
+        android:id="@+id/txtAcceleration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Acceleration: " />
+
+    <TextView
+        android:id="@+id/txtAngularVelocity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Angular Velocity: " />
+
     <Button
         android:id="@+id/butEndService"
         android:layout_width="wrap_content"

@@ -1,6 +1,7 @@
 package com.example.crashdetectionservice;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -52,6 +53,7 @@ import static com.example.crashdetectionservice.ActivityNotification.CHANNEL_ID;
 
 public class ActivityService extends Service implements LocationListener, SensorEventListener {
 
+    private final IBinder LocationSensorBinder = new LocalBinder();
     protected Context context;
     private static final int TIMEOUT = 10; // units seconds
     private static final int DELAY = 250000;
@@ -67,6 +69,9 @@ public class ActivityService extends Service implements LocationListener, Sensor
     double xM = 0, yM = 0, zM = 0; // magnetic field variables (xyz)
     double xA_kalman = 0, yA_kalman = 0, zA_kalman = 0; // variables that will be used to store the kalman filter of xA,yA,zA
     double xG_kalman = 0, yG_kalman = 0, zG_kalman = 0; // variable that will be used to store the kalman filter of xG,yG,zG
+
+    boolean firstVelocityInstance = false;
+    double previousVelocity = 0, currentVelocity = 0, velocityChange = 0;
 
     double[] accelerationData = new double[3];
     float[] accelerationFloat = new float[3];
@@ -88,10 +93,16 @@ public class ActivityService extends Service implements LocationListener, Sensor
 
     boolean impactAccelerometer = false; // true/false statement to detect large acceleration
     boolean impactGyroscope = false; // true/false statement to detect large angular velocity
+    boolean impactVelocity = false; // true/false statement to detect velocity changes (linear acceleration)
+    int impactSensorTimer = 0, impactVelocityTimer = 0;
+
+    boolean firstLocationInstance = true;
 
     double longitude, latitude, speed, locationAccuracy;
     String address;
     ArrayList<String> LocationPacket = new ArrayList<String>(); // used to send to broadcast receiver in ActivityCrashDetection
+
+    String[] txtViewString = new String[3];
 
     @Override
     public void onCreate() {
@@ -111,8 +122,11 @@ public class ActivityService extends Service implements LocationListener, Sensor
         Log.d(TAG, "onCreate ActivityService called");
 
         // broadcast definition to listen from ActivityCrashDetection
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverRegister,
                 new IntentFilter("activate-sensor-request"));
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverUnregister,
+                new IntentFilter("unregister-sensor-request"));
 
         registerUpdates();
 
@@ -126,8 +140,9 @@ public class ActivityService extends Service implements LocationListener, Sensor
         }
     }
 
+
     // used to listen for when to activate listeners from ActivityCrashDetection
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mMessageReceiverRegister = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "sensor restart called");
@@ -135,12 +150,26 @@ public class ActivityService extends Service implements LocationListener, Sensor
         }
     };
 
+    private BroadcastReceiver mMessageReceiverUnregister = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "sensor unregister called");
+            unRegisterUpdates();
+        }
+    };
 
+    public ActivityService() {}
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return LocationSensorBinder;
+    }
+
+    public class LocalBinder extends Binder {
+        ActivityService getService() {
+            return ActivityService.this;
+        }
     }
 
     @Override
@@ -155,60 +184,45 @@ public class ActivityService extends Service implements LocationListener, Sensor
                 //.setContentIntent(pendingIntent)
                 .build();
         startForeground(1, notification);
-        // I'm not entirely clear on the different between START_NOT_STICKY and START_STICKY
         return START_NOT_STICKY;
     }
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
+        if (firstLocationInstance) {
+            Log.d(TAG, "firstLocationInstance");
+            Intent intent = new Intent("start-crash-detection-check");
+            LocalBroadcastManager.getInstance(ActivityService.this).sendBroadcast(intent);
+            firstLocationInstance = false;
+        }
+
+        impactVelocity = false; // determining when impactVelocity is false should be revised
         speed = location.getSpeed()*3.6; // units km/h
         longitude = location.getLongitude();
         latitude = location.getLatitude();
 
         locationAccuracy = location.getAccuracy();
-        Log.d(TAG, "accuracy = " + locationAccuracy + " speed: " + (int) speed + " km/h");
-        Log.d(TAG, "max Ax: " + maxAcceleration[0] + " Ay: " + maxAcceleration[1] +
-                " Az: " + maxAcceleration[2]);
-        Log.d(TAG, "max Gx: " + maxGyroscope[0] + " Gy: " + maxGyroscope[1] + " Gz: " + maxGyroscope[2]);
 
-        // Log.d(TAG, "speed: " + speed + " long: " + longitude + " latitude: " + latitude );
-        /*Log.d(TAG, "orientation x: " + Orientation[1]*180/Math.PI + " y: " + OrientationFloat[2]*180/Math.PI + " z: " +
-                OrientationFloat[0]*180/Math.PI);
-         */
-
-        // this checks whether an "impact" has been detected from sensor listeners
-        if (impactAccelerometer || impactGyroscope) {
-            // check if there is reliable signal strength to determine a valid speed
-            if (locationAccuracy > 0) {
-                // if speed is greater than 0 (ie. user is moving)
-                if (speed > 0) {
-                    address = getCompleteAddressString();
-                    LocationPacket.add(String.valueOf(latitude));
-                    LocationPacket.add(String.valueOf(longitude));
-                    LocationPacket.add(address);
-
-                    Log.d(TAG, "broadcast receiver to be called");
-                    //intent with data message to be sent
-                    Intent intent = new Intent("alert-dialog-request");
-                    intent.putStringArrayListExtra("LocationPacket", LocationPacket);
-
-                    unRegisterUpdates(); // stop using sensor and location data while checking crash data
-                    //sends data from locationPacket to broadcast that is receiving "alert-dialog-request"
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-
-                } else {
-                    Log.d(TAG, "User is stationary, crash detection not activated");
-                }
-            } else {
-                // more should be added here to check if a crash has occurred in low signal areas
-                // ie. tunnel etc.
-                Log.d(TAG, "Unreliable signal to determine if user is moving");
-            }
-
-            impactAccelerometer = false;
-            impactGyroscope = false;
-
+        if (!firstVelocityInstance) {
+            currentVelocity = speed;
+            firstVelocityInstance = true;
+        } else {
+            previousVelocity = currentVelocity;
+            currentVelocity = speed;
+            velocityChange = currentVelocity - previousVelocity;
         }
+
+        // previous velocity is greater than current velocity in moments of crash, therefore
+        // check to see if velocity change is negative
+        if (locationAccuracy > 0 && velocityChange < 0) {
+            // if the velocity change is greater than 10, set impactVelocity to true
+            if (Math.abs(velocityChange) > 10) {
+                impactVelocity = true;
+            }
+        }
+
+        //Log.d(TAG, "Velocity: " + (int) speed + " km/h" + " Accuracy: " + (int) locationAccuracy + " aX: " + maxAcceleration[0] +
+        //        " aY: " + maxAcceleration[1] + " aZ: " + maxAcceleration[2]);
 
     }
 
@@ -290,9 +304,9 @@ public class ActivityService extends Service implements LocationListener, Sensor
     }
 
     // finding the address of user from geocoder
-    private String getCompleteAddressString() {
+    public String[] getCompleteAddressString() {
         String strAdd = "";
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        Geocoder geocoder = new Geocoder(ActivityService.this, Locale.getDefault());
         try {
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
             if (addresses != null) {
@@ -311,7 +325,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
             e.printStackTrace();
             Log.d(TAG, "Cannot get Address!");
         }
-        return strAdd;
+        return new String[]{strAdd, String.valueOf(latitude), String.valueOf(longitude)};
     }
 
     public void CreateSensorFile(String file) {
@@ -382,11 +396,20 @@ public class ActivityService extends Service implements LocationListener, Sensor
         locationManager.removeUpdates(this);
     }
 
+
+
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy ActivityService called");
         stopForeground(true);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        firstLocationInstance = true;
+
+        Intent intent = new Intent("end-crash-check");
+        LocalBroadcastManager.getInstance(ActivityService.this).sendBroadcast(intent);
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverRegister);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverUnregister);
+
         unRegisterUpdates();
         super.onDestroy();
     }
