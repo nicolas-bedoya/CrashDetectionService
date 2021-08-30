@@ -108,8 +108,6 @@ public class ActivityService extends Service implements LocationListener, Sensor
     public void onCreate() {
         super.onCreate();
 
-        //Log.d(TAG, "Service is created");
-
         File accelerationFile = getFileStreamPath(ACCELERATION_DATA_FILE_NAME); // used for loading acceleration data into txt file
         File gyroscopeFile = getFileStreamPath(GYROSCOPE_DATA_FILE_NAME); // used for loading gyroscope data into txt file
 
@@ -166,6 +164,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
         return LocationSensorBinder;
     }
 
+    // creating reference to ActivityService accessed through Binder
     public class LocalBinder extends Binder {
         ActivityService getService() {
             return ActivityService.this;
@@ -196,7 +195,6 @@ public class ActivityService extends Service implements LocationListener, Sensor
             firstLocationInstance = false;
         }
 
-        impactVelocity = false; // determining when impactVelocity is false should be revised
         speed = location.getSpeed()*3.6; // units km/h
         longitude = location.getLongitude();
         latitude = location.getLatitude();
@@ -220,10 +218,6 @@ public class ActivityService extends Service implements LocationListener, Sensor
                 impactVelocity = true;
             }
         }
-
-        //Log.d(TAG, "Velocity: " + (int) speed + " km/h" + " Accuracy: " + (int) locationAccuracy + " aX: " + maxAcceleration[0] +
-        //        " aY: " + maxAcceleration[1] + " aZ: " + maxAcceleration[2]);
-
     }
 
     @Override

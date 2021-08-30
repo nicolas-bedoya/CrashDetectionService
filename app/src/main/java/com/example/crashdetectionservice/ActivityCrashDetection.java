@@ -85,30 +85,35 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
     }
 
+    // LocationSensorConnection used for binding to ActivityService through LocationSensorService
     private ServiceConnection LocationSensorConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             LocalBinder binder = (LocalBinder) service;
             LocationSensorService = binder.getService();
-            isBound = true;
+            isBound = true; // to determine whether the service is bounded or not
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            isBound = false;
+            isBound = false; // service is disconnected (not bounded)
         }
     };
 
-    // broadcast receiver from ActivityService
+    // broadcast receiver to call start checking for crash detection (CrashDetectionCheck())
+    // received from ActivityService
     private BroadcastReceiver mMessageReceiverCrashCheck = new BroadcastReceiver() {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive called");
-            CrashDetectionCheck();
+            CrashDetectionCheck(); // calls check whether crash has occurred through the function
         }
     };
 
+    // broadcast receiver used to trigger flag ActivityServiceEnd to true
+    // this as a result breaks the runnable/handle in CrashDetectionCheck() function
+    // received from ActivityService
     private BroadcastReceiver mMessageReceiverServiceEnd = new BroadcastReceiver() {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
@@ -118,9 +123,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         }
     };
 
-
-
-    //called from broadcastReceiver
+    // used to notify user that a crash was detected by the app
     private void CrashNotification() {
         Notification crashNotification = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -139,8 +142,10 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
     }
 
     private void AlertDialog() {
+        // broadcast request used to reactivate sensors
         Intent intent = new Intent("activate-sensor-request");
         Intent serviceIntent = new Intent(this, ActivityService.class);
+
         Log.d(TAG, "Alert dialogue - latitude: " + latitude + " longitude: " + longitude + " address: " + address);
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("WARNING")
@@ -160,13 +165,12 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 .setNegativeButton("Dismiss", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // send request to re-register listeners to continue to checking sensors/location
                         crashDetected = false;
+                        // Activating sensors again through broadcast
                         LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(intent);
-                        // LocationSensorService.registerUpdates();
                         dialog.dismiss();
                         Log.d(TAG, "dismiss called");
-                        CrashDetectionCheck();
+                        CrashDetectionCheck(); // continue checking crash flags
                     }
                 })
                 .create();
@@ -176,7 +180,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         // timer added to alertDialog with a time of 120 second
         Handler handler = new Handler();
         final Runnable runnable = new Runnable() {
-            int timeout = 10;//TIMEOUT
+            int timeout = TIMEOUT;
             @Override
             public void run() {
                 if(!dialog.isShowing()) {
@@ -205,7 +209,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
             }
         };
 
-        handler.post(runnable);
+        handler.post(runnable); // what exactly does this do?
     }
 
     // sends location to both emergency contacts
@@ -329,6 +333,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         final Runnable runnable = new Runnable() {
             @Override
             public void run() {
+                // flags obtained from ActivityService through reference defined from LocationSensorService
                 impactVelocity = LocationSensorService.impactVelocity;
                 impactAccelerometer = LocationSensorService.impactAccelerometer;
                 impactGyroscope = LocationSensorService.impactGyroscope;
@@ -345,10 +350,11 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 }
 
                 if ((impactAccelerometer || impactGyroscope)) {
-                    impactVelocity = true; // remove this immediately
                     if (impactSensorTimer < 4) {
                         impactSensorTimer++;
-                        // check if there is reliable signal strength to determine a valid speed
+
+                        // if velocity change was detected and impact is detected from accelerometer or gyroscope
+                        // assume crash has occurred
                         if (impactVelocity) {
                             LocationSensorService.impactVelocity = false;
                             LocationSensorService.impactAccelerometer = false;
@@ -365,6 +371,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                         }
 
                     } else {
+                        // reset the sensor timer back to 0, as well as setting flags back to false
                         impactSensorTimer = 0;
                         impactVelocityTimer = 0;
                         LocationSensorService.impactAccelerometer = false;
@@ -375,6 +382,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 if (crashDetected) {
                     Log.d(TAG, "Crash detected activated");
                     Intent unregisterUpdateIntent = new Intent("unregister-sensor-request");
+                    // unregister sensor and location listeners from ActivityService
                     LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(unregisterUpdateIntent);
 
                     CrashNotification();
@@ -387,8 +395,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                 }
             }
         };
-        //Log.d(TAG, "CrashDetectionCheck complete");
-        handler.post(runnable);
+        handler.post(runnable); // WHAT DOES THIS DO? (messageQueue?)
     }
 
     @Override
@@ -399,6 +406,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
             case R.id.butStartService:
                 Log.d(TAG, "startService method called");
 
+                // receives broadcast messages from ActivityService
                 LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverCrashCheck,
                         new IntentFilter("start-crash-detection-check"));
 
