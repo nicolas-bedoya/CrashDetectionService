@@ -9,6 +9,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,10 +40,17 @@ import com.example.crashdetectionservice.ActivityService.LocalBinder;
 
 import static com.example.crashdetectionservice.ActivityNotification.CHANNEL_ID;
 
-public class ActivityCrashDetection extends AppCompatActivity implements View.OnClickListener /*, MyCallback*/{
+public class ActivityCrashDetection extends AppCompatActivity implements View.OnClickListener {
+
+    private static final String ACTIVATE_SENSOR_REQUEST = "activate-sensor-request";
+    private static final String START_CRASH_DETECTION_CHECK = "start-crash-detection-check";
+    private static final String END_CRASH_CHECK = "end-crash-check";
+    private static final String DISMISS_ALERT_DIALOG = "dismiss-alert-dialog";
+    private static final String UNREGISTER_SENSOR_REQUEST = "unregister-sensor-request";
 
     ActivityService LocationSensorService;
     boolean isBound = false;
+    boolean DismissBroadcast = false;
 
     private static final String TAG = "ActivityCrashDetection";
     private static final String USER_CONTACT_FILE_NAME = "UserContactInfo.txt";
@@ -64,7 +72,9 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
     int impactVelocityTimer = 0, impactSensorTimer = 0;
     boolean impactVelocity = false, impactAccelerometer = false, impactGyroscope = false, crashDetected = false;
-    boolean ActivityServiceEnd = false;
+    boolean ActivityServiceEnd = true;
+    boolean DismissAlert = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,7 +92,6 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         TextView txtSpeed = findViewById(R.id.txtSpeed);
         TextView txtAngularVelocity = findViewById(R.id.txtAngularVelocity);
         TextView txtAcceleration = findViewById(R.id.txtAcceleration);
-
     }
 
     // LocationSensorConnection used for binding to ActivityService through LocationSensorService
@@ -98,6 +107,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         public void onServiceDisconnected(ComponentName name) {
             isBound = false; // service is disconnected (not bounded)
         }
+
     };
 
     // broadcast receiver to call start checking for crash detection (CrashDetectionCheck())
@@ -123,15 +133,64 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         }
     };
 
+    private BroadcastReceiver mMessageReceiverDismissAlert = new BroadcastReceiver() {
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int id = intent.getIntExtra("id", -1);
+            Log.d(TAG, "ID of getIntExtra: " + id);
+            if (id >= 0) {
+                if (id == 2) {
+                    // confirm
+                    notificationManager.cancel(2);
+                    DismissBroadcast = false;
+                    DismissAlert = true;
+                }
+
+                else if (id == 1) {
+                    // dismiss
+                    notificationManager.cancel(2);
+                    DismissAlert = true;
+                    DismissBroadcast = true;
+                    Log.d(TAG, "dismiss called");
+                }
+            }
+        }
+    };
+
+
     // used to notify user that a crash was detected by the app
     private void CrashNotification() {
         Notification crashNotification = null;
+
+        //intent to return back to the activity (may not be needed for now)
+        Intent activityIntent = new Intent(this, ActivityCrashDetection.class);
+        PendingIntent actionIntent = PendingIntent.getActivity(this, 0,
+                activityIntent, 0);
+
+        // broadcast intent to stop the alertDialog through dismiss button (continues crash detection)
+        Intent broadcastConfirmIntent = new Intent(this, NotificationReceiver.class);
+        broadcastConfirmIntent.putExtra("id", 2);
+
+        PendingIntent actionConfirmIntent = PendingIntent.getBroadcast(this, 2,
+                broadcastConfirmIntent, 0);
+
+        // broad
+        Intent broadcastDismissIntent = new Intent(this, NotificationReceiver.class);
+        broadcastDismissIntent.putExtra("id", 1);
+
+        PendingIntent actionDismissIntent= PendingIntent.getBroadcast(this, 1,
+                broadcastDismissIntent, 0);
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            crashNotification = new Notification.Builder(this, CHANNEL_ID)
+            crashNotification = new NotificationCompat.Builder(this, CHANNEL_ID)
                     .setContentTitle("Crash Detected")
                     .setContentText("Have you experienced a crash?")
                     .setSmallIcon(R.drawable.ic_vintage)
-                    //.setContentIntent(pendingIntent)
+                    //.setPriority(NotificationCompat.PRIORITY_HIGH);
+                    .addAction(R.mipmap.ic_launcher_round, "Yes", actionConfirmIntent)
+                    .addAction(R.mipmap.ic_launcher, "Dismiss", actionDismissIntent)
+                    //.setContentIntent(intent)
                     .build();
         }
 
@@ -143,7 +202,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
     private void AlertDialog() {
         // broadcast request used to reactivate sensors
-        Intent intent = new Intent("activate-sensor-request");
+        Intent intent = new Intent(ACTIVATE_SENSOR_REQUEST);
         Intent serviceIntent = new Intent(this, ActivityService.class);
 
         Log.d(TAG, "Alert dialogue - latitude: " + latitude + " longitude: " + longitude + " address: " + address);
@@ -157,6 +216,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
                         unbindService(LocationSensorConnection);
                         LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverCrashCheck);
                         LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverServiceEnd);
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverDismissAlert);
                         ActivityServiceEnd = true;
                         SendSMS(); // user pressed yes, therefore SMS will be sent to emergency contacts
                         dialog.dismiss(); // dialog removed
@@ -183,32 +243,51 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
             int timeout = TIMEOUT;
             @Override
             public void run() {
-                if(!dialog.isShowing()) {
-                    notificationManager.cancel(2); // remove crashNotification if dialog not showing
-                    Log.d(TAG, "Ending loop");
-                }
-                else if(timeout > 0) {
-                    dialog.setMessage("Have you experienced a crash?\n" + timeout);
-                    Log.d(TAG, "Timeout in: " + timeout);
-                    timeout--;
-                    handler.postDelayed(this, 1000); // delay of 1 second
-                }
-                else {
-                    if (dialog.isShowing()) {
-                        Log.d(TAG, "Timeout.");
+                if (!DismissAlert) {
+                    if (!dialog.isShowing()) {
+                        notificationManager.cancel(2); // remove crashNotification if dialog not showing
+                        Log.d(TAG, "Ending loop");
+                    } else if (timeout > 0) {
+                        dialog.setMessage("Have you experienced a crash?\n" + timeout);
+                        Log.d(TAG, "Timeout in: " + timeout);
+                        timeout--;
+                        handler.postDelayed(this, 1000); // delay of 1 second
+                    } else {
+                        if (dialog.isShowing()) {
+                            Log.d(TAG, "Timeout.");
+                            stopService(serviceIntent);
+                            unbindService(LocationSensorConnection);
+                            LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverCrashCheck);
+                            LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverServiceEnd);
+                            LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverDismissAlert);
+                            ActivityServiceEnd = true;
+                            SendSMS(); // user pressed yes, therefore SMS will be sent to emergency contacts
+                            dialog.dismiss(); // dialog removed
+                        }
+                    }
+                } else {
+                    if (DismissBroadcast) {
+                        dialog.dismiss();
+                        DismissAlert = false;
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(intent);
+                        CrashDetectionCheck();
+                        DismissBroadcast = false;
+                    } else {
+                        Log.d(TAG, "CRASH CONFIRMED FROM NOTIFICATION");
+                        DismissAlert = false;
                         stopService(serviceIntent);
                         unbindService(LocationSensorConnection);
                         LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverCrashCheck);
                         LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverServiceEnd);
+                        LocalBroadcastManager.getInstance(ActivityCrashDetection.this).unregisterReceiver(mMessageReceiverDismissAlert);
                         ActivityServiceEnd = true;
                         SendSMS(); // user pressed yes, therefore SMS will be sent to emergency contacts
                         dialog.dismiss(); // dialog removed
+
                     }
                 }
-
             }
         };
-
         handler.post(runnable); // what exactly does this do?
     }
 
@@ -329,6 +408,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
     public void CrashDetectionCheck() {
         crashDetected = false;
+        // DismissAlert = false;
         Handler handler = new Handler();
         final Runnable runnable = new Runnable() {
             @Override
@@ -355,6 +435,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
                         // if velocity change was detected and impact is detected from accelerometer or gyroscope
                         // assume crash has occurred
+                        impactVelocity = true;
                         if (impactVelocity) {
                             LocationSensorService.impactVelocity = false;
                             LocationSensorService.impactAccelerometer = false;
@@ -381,7 +462,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
                 if (crashDetected) {
                     Log.d(TAG, "Crash detected activated");
-                    Intent unregisterUpdateIntent = new Intent("unregister-sensor-request");
+                    Intent unregisterUpdateIntent = new Intent(UNREGISTER_SENSOR_REQUEST);
                     // unregister sensor and location listeners from ActivityService
                     LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(unregisterUpdateIntent);
 
@@ -404,27 +485,40 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         Intent intent = new Intent(this, ActivityService.class);
         switch(b.getId()) {
             case R.id.butStartService:
-                Log.d(TAG, "startService method called");
 
-                // receives broadcast messages from ActivityService
-                LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverCrashCheck,
-                        new IntentFilter("start-crash-detection-check"));
+                if (ActivityServiceEnd) {
+                    Log.d(TAG, "startService method called");
 
-                LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverServiceEnd,
-                        new IntentFilter("end-crash-check"));
+                    // receives broadcast messages from ActivityService
+                    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverCrashCheck,
+                            new IntentFilter(START_CRASH_DETECTION_CHECK));
 
-                startService(intent);
-                bindService(intent, LocationSensorConnection, Context.BIND_AUTO_CREATE);
-                ActivityServiceEnd = false;
+                    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverServiceEnd,
+                            new IntentFilter(END_CRASH_CHECK));
+
+                    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverDismissAlert,
+                            new IntentFilter(DISMISS_ALERT_DIALOG));
+
+                    startService(intent);
+                    bindService(intent, LocationSensorConnection, Context.BIND_AUTO_CREATE);
+                    ActivityServiceEnd = false;
+                }
+
                 break;
 
             case R.id.butEndService:
-                Log.d(TAG, "Stop service button called");
-                unbindService(LocationSensorConnection);
+                Log.d(TAG, "Stop service button called " + isBound);
+                if (isBound) {
+                    unbindService(LocationSensorConnection);
+                    isBound = false;
+                }
                 stopService(intent);
                 LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverCrashCheck);
                 LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverServiceEnd);
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverDismissAlert);
                 ActivityServiceEnd = true;
+                DismissBroadcast = false;
+                DismissAlert = false;
                 break;
         }
     }
@@ -435,10 +529,10 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         ActivityServiceEnd = true;
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverCrashCheck);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverServiceEnd);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverDismissAlert);
         if (!isBound) {
             unbindService(LocationSensorConnection); // check if service is bounded before unbinding
         }
-        //unbindService(LocationSensorConnection); // check if service is bounded before unbinding
         stopService(intent); // kill service if on destroy is called, ie. app is removed in task manager
         super.onDestroy();
     }

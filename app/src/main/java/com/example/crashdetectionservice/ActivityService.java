@@ -62,6 +62,11 @@ public class ActivityService extends Service implements LocationListener, Sensor
     private static final String ACCELERATION_DATA_FILE_NAME = "AccelerationData.txt";
     private static final String GYROSCOPE_DATA_FILE_NAME = "GyroscopeData.txt";
 
+    private static final String ACTIVATE_SENSOR_REQUEST = "activate-sensor-request";
+    private static final String START_CRASH_DETECTION_CHECK = "start-crash-detection-check";
+    private static final String UNREGISTER_SENSOR_REQUEST = "unregister-sensor-request";
+    private static final String END_CRASH_CHECK = "end-crash-check";
+
     private SensorManager sensorManager;
     Sensor accelerometer, gyroscope, magnetic;
     double xA = 0, yA = 0, zA = 0; // acceleration variables (xyz)
@@ -121,10 +126,10 @@ public class ActivityService extends Service implements LocationListener, Sensor
 
         // broadcast definition to listen from ActivityCrashDetection
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverRegister,
-                new IntentFilter("activate-sensor-request"));
+                new IntentFilter(ACTIVATE_SENSOR_REQUEST));
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverUnregister,
-                new IntentFilter("unregister-sensor-request"));
+                new IntentFilter(UNREGISTER_SENSOR_REQUEST));
 
         registerUpdates();
 
@@ -190,7 +195,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
     public void onLocationChanged(@NonNull Location location) {
         if (firstLocationInstance) {
             Log.d(TAG, "firstLocationInstance");
-            Intent intent = new Intent("start-crash-detection-check");
+            Intent intent = new Intent(START_CRASH_DETECTION_CHECK);
             LocalBroadcastManager.getInstance(ActivityService.this).sendBroadcast(intent);
             firstLocationInstance = false;
         }
@@ -390,15 +395,13 @@ public class ActivityService extends Service implements LocationListener, Sensor
         locationManager.removeUpdates(this);
     }
 
-
-
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy ActivityService called");
         stopForeground(true);
         firstLocationInstance = true;
 
-        Intent intent = new Intent("end-crash-check");
+        Intent intent = new Intent(END_CRASH_CHECK);
         LocalBroadcastManager.getInstance(ActivityService.this).sendBroadcast(intent);
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverRegister);
