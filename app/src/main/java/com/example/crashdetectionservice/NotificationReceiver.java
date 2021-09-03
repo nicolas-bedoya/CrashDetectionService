@@ -7,13 +7,12 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-public class NotificationReceiver extends BroadcastReceiver{
+public class NotificationReceiver extends BroadcastReceiver implements Globals{
     public static final String TAG = "NotificationReceiver";
-    public static final String DISMISS_ALERT_DIALOG = "dismiss-alert-dialog";
     @Override
     public void onReceive(Context context, Intent intent) {
         int id = intent.getIntExtra("id", -1);
-        Intent alertIntent = new Intent(DISMISS_ALERT_DIALOG);
+        Intent alertIntent = new Intent(Globals.DISMISS_ALERT_DIALOG);
         Log.d(TAG, "ID of getIntExtra: " + id);
         if (id >= 0) {
             if (id == 1) {

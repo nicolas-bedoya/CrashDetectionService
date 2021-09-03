@@ -51,21 +51,13 @@ import java.util.Locale;
 import static com.example.crashdetectionservice.ActivityNotification.CHANNEL_ID;
 
 
-public class ActivityService extends Service implements LocationListener, SensorEventListener {
+public class ActivityService extends Service implements LocationListener, SensorEventListener, Globals {
 
     private final IBinder LocationSensorBinder = new LocalBinder();
     protected Context context;
     private static final int TIMEOUT = 10; // units seconds
-    private static final int DELAY = 250000;
+    private static final int DELAY = 10000; // units in milliseconds
     private static final String TAG = "ActivityService";
-
-    private static final String ACCELERATION_DATA_FILE_NAME = "AccelerationData.txt";
-    private static final String GYROSCOPE_DATA_FILE_NAME = "GyroscopeData.txt";
-
-    private static final String ACTIVATE_SENSOR_REQUEST = "activate-sensor-request";
-    private static final String START_CRASH_DETECTION_CHECK = "start-crash-detection-check";
-    private static final String UNREGISTER_SENSOR_REQUEST = "unregister-sensor-request";
-    private static final String END_CRASH_CHECK = "end-crash-check";
 
     private SensorManager sensorManager;
     Sensor accelerometer, gyroscope, magnetic;
@@ -115,8 +107,8 @@ public class ActivityService extends Service implements LocationListener, Sensor
     public void onCreate() {
         super.onCreate();
 
-        File accelerationFile = getFileStreamPath(ACCELERATION_DATA_FILE_NAME); // used for loading acceleration data into txt file
-        File gyroscopeFile = getFileStreamPath(GYROSCOPE_DATA_FILE_NAME); // used for loading gyroscope data into txt file
+        File accelerationFile = getFileStreamPath(Globals.ACCELERATION_DATA_FILE_NAME); // used for loading acceleration data into txt file
+        File gyroscopeFile = getFileStreamPath(Globals.GYROSCOPE_DATA_FILE_NAME); // used for loading gyroscope data into txt file
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
@@ -128,20 +120,20 @@ public class ActivityService extends Service implements LocationListener, Sensor
 
         // broadcast definition to listen from ActivityCrashDetection
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverRegister,
-                new IntentFilter(ACTIVATE_SENSOR_REQUEST));
+                new IntentFilter(Globals.ACTIVATE_SENSOR_REQUEST));
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverUnregister,
-                new IntentFilter(UNREGISTER_SENSOR_REQUEST));
+                new IntentFilter(Globals.UNREGISTER_SENSOR_REQUEST));
 
         registerUpdates();
 
         // if acceleration file doesn't exist, then create it
         if (!accelerationFile.exists()) {
-           aclc.CreateSensorFile(ACCELERATION_DATA_FILE_NAME, this);
+           aclc.CreateSensorFile(Globals.ACCELERATION_DATA_FILE_NAME, this);
         }
         // if gyroscope file doesn't exist, then create it
         if (!gyroscopeFile.exists()) {
-            aclc.CreateSensorFile(GYROSCOPE_DATA_FILE_NAME, this);
+            aclc.CreateSensorFile(Globals.GYROSCOPE_DATA_FILE_NAME, this);
         }
     }
 
@@ -197,7 +189,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
     public void onLocationChanged(@NonNull Location location) {
         if (firstLocationInstance) {
             Log.d(TAG, "firstLocationInstance");
-            Intent intent = new Intent(START_CRASH_DETECTION_CHECK);
+            Intent intent = new Intent(Globals.START_CRASH_DETECTION_CHECK);
             LocalBroadcastManager.getInstance(ActivityService.this).sendBroadcast(intent);
             firstLocationInstance = false;
         }
@@ -235,7 +227,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
             zG = event.values[2];
 
             gyroscopeData[0] = xG; gyroscopeData[1] = yG; gyroscopeData[2] = zG;
-            aclc.AddDataToSensorTxt(gyroscopeData, GYROSCOPE_DATA_FILE_NAME, this);
+            aclc.AddDataToSensorTxt(gyroscopeData, Globals.GYROSCOPE_DATA_FILE_NAME, this);
 
             // finding max gyroscope
             if (Math.abs(xG) > Math.abs(maxGyroscope[0])) {
@@ -273,7 +265,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
                 maxAcceleration[2] = zA;
             }
 
-            aclc.AddDataToSensorTxt(accelerationData, ACCELERATION_DATA_FILE_NAME, this);
+            aclc.AddDataToSensorTxt(accelerationData, Globals.ACCELERATION_DATA_FILE_NAME, this);
             // acceleration of 35 was allocated as a threshold for now
             if (Math.abs(xA) > 35 || Math.abs(yA) > 35 || Math.abs(zA) > 35 ) {
                 impactAccelerometer = true;
@@ -358,7 +350,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
         stopForeground(true);
         firstLocationInstance = true;
 
-        Intent intent = new Intent(END_CRASH_CHECK);
+        Intent intent = new Intent(Globals.END_CRASH_CHECK);
         LocalBroadcastManager.getInstance(ActivityService.this).sendBroadcast(intent);
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiverRegister);

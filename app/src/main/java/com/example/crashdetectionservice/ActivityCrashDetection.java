@@ -40,21 +40,12 @@ import com.example.crashdetectionservice.ActivityService.LocalBinder;
 
 import static com.example.crashdetectionservice.ActivityNotification.CHANNEL_ID;
 
-public class ActivityCrashDetection extends AppCompatActivity implements View.OnClickListener {
-
-    private static final String ACTIVATE_SENSOR_REQUEST = "activate-sensor-request";
-    private static final String START_CRASH_DETECTION_CHECK = "start-crash-detection-check";
-    private static final String END_CRASH_CHECK = "end-crash-check";
-    private static final String DISMISS_ALERT_DIALOG = "dismiss-alert-dialog";
-    private static final String UNREGISTER_SENSOR_REQUEST = "unregister-sensor-request";
+public class ActivityCrashDetection extends AppCompatActivity implements View.OnClickListener, Globals {
 
     ActivityService LocationSensorService;
     boolean isBound = false;
     boolean DismissBroadcast = false;
-
     private static final String TAG = "ActivityCrashDetection";
-    private static final String USER_CONTACT_FILE_NAME = "UserContactInfo.txt";
-    private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
     private static final int TIMEOUT = 120; // units seconds
     private Context context;
 
@@ -67,9 +58,6 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
     String emergencyFirstName2, emergencyLastName2, emergencyPhone2;
     String longitude, latitude, address;
     String[] LocationString = new String[3];
-
-    //boolean isBound = false;
-    ArrayList<String> LocationPacket = new ArrayList<String>();
 
     NotificationManagerCompat notificationManager;
 
@@ -143,6 +131,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         }
     };
 
+    // broadcast from notification to dismiss or confirm
     private BroadcastReceiver mMessageReceiverDismissAlert = new BroadcastReceiver() {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
@@ -184,12 +173,14 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         PendingIntent actionConfirmIntent = PendingIntent.getBroadcast(this, 2,
                 broadcastConfirmIntent, 0);
 
-        // broad
+        // broadcast intent to stop crash detection check ('yes' pressed on notification)
         Intent broadcastDismissIntent = new Intent(this, NotificationReceiver.class);
         broadcastDismissIntent.putExtra("id", 1);
 
         PendingIntent actionDismissIntent= PendingIntent.getBroadcast(this, 1,
                 broadcastDismissIntent, 0);
+
+        //Intent dummyIntent = new Intent(this, )
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             crashNotification = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -208,10 +199,9 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         notificationManager.notify(2, crashNotification);
 
     }
-
     private void AlertDialog() {
         // broadcast request used to reactivate sensors
-        Intent intent = new Intent(ACTIVATE_SENSOR_REQUEST);
+        Intent intent = new Intent(Globals.ACTIVATE_SENSOR_REQUEST);
         Intent serviceIntent = new Intent(this, ActivityService.class);
 
         Log.d(TAG, "Alert dialogue - latitude: " + latitude + " longitude: " + longitude + " address: " + address);
@@ -393,7 +383,7 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
                 if (crashDetected) {
                     Log.d(TAG, "Crash detected activated");
-                    Intent unregisterUpdateIntent = new Intent(UNREGISTER_SENSOR_REQUEST);
+                    Intent unregisterUpdateIntent = new Intent(Globals.UNREGISTER_SENSOR_REQUEST);
                     // unregister sensor and location listeners from ActivityService
                     LocalBroadcastManager.getInstance(ActivityCrashDetection.this).sendBroadcast(unregisterUpdateIntent);
 
@@ -422,13 +412,13 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
 
                     // receives broadcast messages from ActivityService
                     LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverCrashCheck,
-                            new IntentFilter(START_CRASH_DETECTION_CHECK));
+                            new IntentFilter(Globals.START_CRASH_DETECTION_CHECK));
 
                     LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverServiceEnd,
-                            new IntentFilter(END_CRASH_CHECK));
+                            new IntentFilter(Globals.END_CRASH_CHECK));
 
                     LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiverDismissAlert,
-                            new IntentFilter(DISMISS_ALERT_DIALOG));
+                            new IntentFilter(Globals.DISMISS_ALERT_DIALOG));
 
                     startService(intent);
                     bindService(intent, LocationSensorConnection, Context.BIND_AUTO_CREATE);

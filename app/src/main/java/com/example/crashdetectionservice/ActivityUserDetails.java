@@ -21,15 +21,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class ActivityUserDetails extends Activity implements View.OnClickListener{
-    private static final String USER_CONTACT_FILE_NAME =  "UserContactInfo.txt";
-    private static final String ACCELERATION_DATA_FILE_NAME = "AccelerationData.txt";
+public class ActivityUserDetails extends Activity implements View.OnClickListener {
+
     private static final String TAG = "ActivityUserDetails";
-
-    private static final String CREATE_USER_METHOD = "createUserMethod";
-
     ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
-    MainActivity mA = new MainActivity();
 
     EditText txtUserFirstName, txtUserLastName, txtUserPhoneNumber;
     String userFirstName, userLastName, userPhoneNumber; // variables assigned to user details
@@ -43,60 +38,6 @@ public class ActivityUserDetails extends Activity implements View.OnClickListene
         butSubmitUserDetails.setOnClickListener(this);
 
     }
-
-    // function to create text file for user
-    @SuppressLint("LongLogTag")
-    public void CreateUserContactTxtFile() {
-        FileOutputStream fos = null;
-        try {
-            fos = openFileOutput(USER_CONTACT_FILE_NAME, MODE_PRIVATE);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                    Log.d(TAG, "UserTxtFile saved!");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    // function to store the data onto phone
-    @SuppressLint("LongLogTag")
-    public void AddDataUserContactTxtFile() {
-        FileOutputStream fos = null;
-        String txtUserFirstName = userFirstName + "\n";
-        String txtUserLastName = userLastName + "\n";
-        String txtUserPhoneNumber = userPhoneNumber + "\n";
-
-        try {
-
-            fos = openFileOutput(USER_CONTACT_FILE_NAME, MODE_APPEND);
-            fos.write(txtUserFirstName.getBytes());
-            fos.write(txtUserLastName.getBytes());
-            fos.write(txtUserPhoneNumber.getBytes());
-            Log.d(TAG,"data saved");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                    Log.d(TAG, "txt Added");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
 
     @SuppressLint("LongLogTag")
     @Override

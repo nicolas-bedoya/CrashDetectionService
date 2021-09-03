@@ -20,13 +20,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class ActivityEmergencyContacts extends AppCompatActivity implements View.OnClickListener{
-    private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
+public class ActivityEmergencyContacts extends AppCompatActivity implements View.OnClickListener, Globals{
 
     ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
     public Button button;
-    public EditText editText;
-    boolean CustomContacts = false, DefaultContact = false;
     // since 2 emergency contacts are going to be added, there are 2 sets of data that we keep record of
     // hence, first_name1 and first_name2 etc.
     private static final String TAG = "ActivityEmergencyContacts";
@@ -74,7 +71,6 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
                 Log.d(TAG, "FN2: " + FirstName2 + " SN2: " + LastName2 + " PN2: " + PhoneNumber2 );
                 Log.d(TAG, "PN1.length: " + PhoneNumber1.length());
 
-                //AddDataToContactTxt();
                 aclc.AddDataToEmergencyTxt(FirstName1, LastName1, PhoneNumber1,
                         FirstName2, LastName2, PhoneNumber2, this); // Add emergency contacts to EmergencyContactInfo.txt
 

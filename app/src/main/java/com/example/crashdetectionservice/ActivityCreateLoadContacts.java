@@ -16,15 +16,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class ActivityCreateLoadContacts extends AppCompatActivity {
-
+public class ActivityCreateLoadContacts extends AppCompatActivity implements Globals{
     public ActivityCreateLoadContacts() {}
-
-    private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
-    private static final String USER_CONTACT_FILE_NAME = "UserContactInfo.txt";
     private static final String TAG = "ActivityCreateLoadContacts";
-
-    private static final String CREATE_USER_METHOD = "createUserMethod";
 
     String[] EmergencyDetails = new String[6];
     String[] UserDetails = new String[4];
@@ -63,7 +57,7 @@ public class ActivityCreateLoadContacts extends AppCompatActivity {
     public void CreateUserContactTxtFile(Context context) {
         FileOutputStream fos = null;
         try {
-            fos = context.openFileOutput(USER_CONTACT_FILE_NAME, MODE_PRIVATE);
+            fos = context.openFileOutput(Globals.USER_CONTACT_FILE_NAME, MODE_PRIVATE);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -91,7 +85,7 @@ public class ActivityCreateLoadContacts extends AppCompatActivity {
 
         try {
             Log.d(TAG, "hello from ActivityCreateLoadContacts");
-            fos = context.openFileOutput(USER_CONTACT_FILE_NAME, MODE_APPEND);
+            fos = context.openFileOutput(Globals.USER_CONTACT_FILE_NAME, MODE_APPEND);
             fos.write(txtUserFirstName.getBytes());
             fos.write(txtUserLastName.getBytes());
             fos.write(txtUserPhoneNumber.getBytes());
@@ -128,7 +122,7 @@ public class ActivityCreateLoadContacts extends AppCompatActivity {
         FileOutputStream fos = null;
         // Add data line by line into text file
         try {
-            fos = context.openFileOutput(EMERGENCY_CONTACT_FILE_NAME, MODE_APPEND);
+            fos = context.openFileOutput(Globals.EMERGENCY_CONTACT_FILE_NAME, MODE_APPEND);
             fos.write(firstName1.getBytes());
             fos.write(lastName1.getBytes());
             fos.write(phoneNumber1.getBytes());
@@ -157,7 +151,7 @@ public class ActivityCreateLoadContacts extends AppCompatActivity {
     public String[] LoadEmergencyContactTxtFile(Context context) {
         FileInputStream fis = null;
         try {
-            fis = context.openFileInput(EMERGENCY_CONTACT_FILE_NAME);
+            fis = context.openFileInput(Globals.EMERGENCY_CONTACT_FILE_NAME);
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader br = new BufferedReader(isr);
             StringBuilder sb = new StringBuilder();
@@ -201,7 +195,7 @@ public class ActivityCreateLoadContacts extends AppCompatActivity {
     public String[] LoadUserContactTxtFile(Context context) {
         FileInputStream fis = null;
         try {
-            fis = context.openFileInput(USER_CONTACT_FILE_NAME);
+            fis = context.openFileInput(Globals.USER_CONTACT_FILE_NAME);
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader br = new BufferedReader(isr);
             StringBuilder sb = new StringBuilder();

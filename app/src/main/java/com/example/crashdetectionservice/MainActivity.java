@@ -23,7 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, Globals {
     private static final String TAG = "MainActivity";
     ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
     // bool statement used to determine if the user has accepted all permissions related to the app
@@ -34,14 +34,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.SEND_SMS
     };
-
-
-    // ACCELERATION... and GYROSCOPE... used to store data from accelerometer in the format of csv
-    // this is done so I can load the data into debug terminal so I can transfer data into MATLAB for graphing
-    private static final String ACCELERATION_DATA_FILE_NAME = "AccelerationData.txt";
-    private static final String GYROSCOPE_DATA_FILE_NAME = "GyroscopeData.txt";
-    private static final String USER_CONTACT_FILE_NAME = "UserContactInfo.txt"; // stores user contact info
-    private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt"; // stores emergency contact info
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -93,10 +85,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         // because there are no other buttons, no other cases will have to be considered
         // i.e. using switch->case
-        File userContactFile = getFileStreamPath(USER_CONTACT_FILE_NAME);
-        File emergencyContactFile = getFileStreamPath(EMERGENCY_CONTACT_FILE_NAME);
-        File accelerationFile = getFileStreamPath(ACCELERATION_DATA_FILE_NAME);
-        File gyroscopeFile = getFileStreamPath(GYROSCOPE_DATA_FILE_NAME);
+        File userContactFile = getFileStreamPath(Globals.USER_CONTACT_FILE_NAME);
+        File emergencyContactFile = getFileStreamPath(Globals.EMERGENCY_CONTACT_FILE_NAME);
+        File accelerationFile = getFileStreamPath(Globals.ACCELERATION_DATA_FILE_NAME);
+        File gyroscopeFile = getFileStreamPath(Globals.GYROSCOPE_DATA_FILE_NAME);
 
         // if all permissions have been accepted
         if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
@@ -128,11 +120,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             // load previous acceleration for plotting
             if (accelerationFile.exists()) {
-                aclc.LoadTxtSensorFile(ACCELERATION_DATA_FILE_NAME, this);
+                aclc.LoadTxtSensorFile(Globals.ACCELERATION_DATA_FILE_NAME, this);
             }
             // load previous gyroscope for plotting
             if (gyroscopeFile.exists()) {
-                aclc.LoadTxtSensorFile(GYROSCOPE_DATA_FILE_NAME, this);
+                aclc.LoadTxtSensorFile(Globals.GYROSCOPE_DATA_FILE_NAME, this);
             }
         }
     }
