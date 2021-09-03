@@ -18,8 +18,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CrashDetectionService">
         <activity android:name=".ActivityEmergencyContacts"/>
+        <activity android:name=".ActivityEmergency1"/>
+        <activity android:name=".ActivityEmergency2"/>
         <activity android:name=".ActivityCrashDetection"/>
         <activity android:name=".ActivityUserDetails"/>
+        <activity android:name=".ActivityCreateLoadContacts"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,7 +30,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <receiver android:name=".NotificationReceiver"/>
         <service
             android:name=".ActivityService"
             android:foregroundServiceType="location"/>

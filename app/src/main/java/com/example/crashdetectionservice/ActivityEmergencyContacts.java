@@ -1,7 +1,9 @@
 package com.example.crashdetectionservice;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -18,16 +20,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class ActivityEmergencyContacts extends AppCompatActivity implements View.OnClickListener{
-    private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
+public class ActivityEmergencyContacts extends AppCompatActivity implements View.OnClickListener, Globals{
 
+    ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
     public Button button;
-    public EditText editText;
-
     // since 2 emergency contacts are going to be added, there are 2 sets of data that we keep record of
     // hence, first_name1 and first_name2 etc.
-    EditText first_name1, first_name2, last_name1, last_name2, phone_number1, phone_number2;
-    private static final String TAG = "ActivityContact";
+    private static final String TAG = "ActivityEmergencyContacts";
     String FirstName1, LastName1, PhoneNumber1, FirstName2, LastName2, PhoneNumber2;
 
     @Override
@@ -35,54 +34,24 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_emergency_contacts);
 
+        Button butEmergency1 = findViewById(R.id.butEmergency1);
+        butEmergency1.setOnClickListener(this);
+
+        Button butEmergency2 = findViewById(R.id.butEmergency2);
+        butEmergency2.setOnClickListener(this);
+
         // this button is used for ease for debugging, instead of manually inputting data, just
         // press this and it will set Rich and Nick as default emergency contacts
         Button butDefaultContact = findViewById(R.id.butDefaultContact);
         butDefaultContact.setOnClickListener(this);
 
         //@Override
-        Button butSensor = findViewById(R.id.butSensor);
-        butSensor.setOnClickListener(this);
+        Button butSaveEmergencyContacts = findViewById(R.id.butSaveEmergencyContacts);
+        butSaveEmergencyContacts.setOnClickListener(this);
 
     }
 
-    public void AddDataToContactTxt() {
-        String firstName1 = FirstName1 + "\n";
-        String lastName1 = LastName1 + "\n";
-        String phoneNumber1 = PhoneNumber1 + "\n";
-
-        String firstName2 = FirstName2 + "\n";
-        String lastName2 = LastName2 + "\n";
-        String phoneNumber2 = PhoneNumber2 + "\n";
-
-        FileOutputStream fos = null;
-        // Add data line by line into text file
-        try {
-            fos = openFileOutput(EMERGENCY_CONTACT_FILE_NAME, MODE_APPEND);
-            fos.write(firstName1.getBytes());
-            fos.write(lastName1.getBytes());
-            fos.write(phoneNumber1.getBytes());
-            fos.write(firstName2.getBytes());
-            fos.write(lastName2.getBytes());
-            fos.write(phoneNumber2.getBytes());
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                    Log.d(TAG, "txt added");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-
+    @SuppressLint("LongLogTag")
     @Override
     public void onClick(View v) {
         Button b = (Button) v;
@@ -102,66 +71,36 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
                 Log.d(TAG, "FN2: " + FirstName2 + " SN2: " + LastName2 + " PN2: " + PhoneNumber2 );
                 Log.d(TAG, "PN1.length: " + PhoneNumber1.length());
 
-                AddDataToContactTxt(); // Add emergency contacts to EmergencyContactInfo.txt
+                aclc.AddDataToEmergencyTxt(FirstName1, LastName1, PhoneNumber1,
+                        FirstName2, LastName2, PhoneNumber2, this); // Add emergency contacts to EmergencyContactInfo.txt
 
                 // proceed to ActivityCrashDetection once data is stored into corresponding txt files
                 startActivity(intent);
                 break;
 
-            case R.id.butSensor:
-                boolean phone_number_satisfied = false;
-                boolean name_satisfied = false;
-                first_name1 = (EditText)findViewById(R.id.editTextFirstName1);
-                last_name1 = (EditText)findViewById(R.id.editTextLastName1);
-                phone_number1 = (EditText)findViewById(R.id.editTextPhoneNumber1);
+            case R.id.butSaveEmergencyContacts:
+                FirstName1 = ActivityEmergency1.emergency1[0];
+                LastName1 = ActivityEmergency1.emergency1[1];
+                PhoneNumber1 = ActivityEmergency1.emergency1[2];
 
-                first_name2 = (EditText)findViewById(R.id.editTextFirstName2);
-                last_name2 = (EditText)findViewById(R.id.editTextLastName2);
-                phone_number2 = (EditText)findViewById(R.id.editTextPhoneNumber2);
+                FirstName2 = ActivityEmergency2.emergency2[0];
+                LastName2 = ActivityEmergency2.emergency2[1];
+                PhoneNumber2 = ActivityEmergency2.emergency2[2];
 
-                FirstName1= first_name1.getText().toString();
-                LastName1 = last_name1.getText().toString();
-                PhoneNumber1 = phone_number1.getText().toString();
+                aclc.AddDataToEmergencyTxt(FirstName1, LastName1, PhoneNumber1,
+                        FirstName2, LastName2, PhoneNumber2, this);
 
-                FirstName2 = first_name2.getText().toString();
-                LastName2 = last_name2.getText().toString();
-                PhoneNumber2 = phone_number2.getText().toString();
+                startActivity(intent);
+                break;
 
-                // check whether user filled all text inputs
-                if (FirstName1.length() == 0 || LastName1.length() == 0 || PhoneNumber1.length() == 0
-                        || FirstName2.length() == 0 || LastName2.length() == 0 || PhoneNumber2.length() == 0) {
-                    // show warning that everything should be filled
-                    Toast errorToast = Toast.makeText(ActivityEmergencyContacts.this, "Error, please ensure everything is filled in the boxes provided", Toast.LENGTH_LONG);
-                    errorToast.show();
-                    Log.d(TAG, "contact strings are empty");
-                }
+            case R.id.butEmergency1:
+                Intent intentEmergency1 = new Intent(ActivityEmergencyContacts.this, ActivityEmergency1.class);
+                startActivity(intentEmergency1);
+                break;
 
-                // check whether text inputs are valid
-                else {
-                    // if condition to check names are entered correctly
-                    if (FirstName1.length() > 0 && LastName1.length() > 0 && FirstName2.length() > 0
-                            && LastName2.length() > 0) {
-                        name_satisfied = true;
-                    }
-                    // if condition to check phone numbers are entered correctly
-                    if (PhoneNumber1.length() == 10 && PhoneNumber1.startsWith("04") &&
-                            PhoneNumber2.length() == 10 && PhoneNumber2.startsWith("04")) {
-                        phone_number_satisfied = true;
-                    }
-                    // if none of the conditions are satisfied, warn user that details are not entered correctly
-                    if (!name_satisfied || !phone_number_satisfied){
-                        Toast errorToast = Toast.makeText(ActivityEmergencyContacts.this, "Error, please ensure details are entered correctly", Toast.LENGTH_LONG);
-                        errorToast.show();
-                    }
-                    // otherwise, load details into EmergencyContactInfo.txt
-                    else if (name_satisfied && phone_number_satisfied) {
-                        Log.d(TAG, "name: " + name_satisfied + "phone: " + phone_number_satisfied);
-                        Log.d(TAG, "FN: " + FirstName1 + " SN: " + LastName1 + " PN: " + PhoneNumber1 );
-                        Log.d(TAG, "PN.length: " + PhoneNumber1.length());
-                        AddDataToContactTxt();
-                        startActivity(intent);
-                    }
-                }
+            case R.id.butEmergency2:
+                Intent intentEmergency2 = new Intent(ActivityEmergencyContacts.this, ActivityEmergency2.class);
+                startActivity(intentEmergency2);
                 break;
         }
     }

@@ -1,40 +1,30 @@
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:weightSum="100"
     android:layout_gravity="top"
-    tools:context=".ActivityUserDetails">
-
-    <!-- GPS set to gone for now -->
+    tools:context=".ActivityEmergency1">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Your Details"
+        android:text="Emergency Contact #1"
         tools:layout_editor_absoluteX="76dp"
         tools:layout_editor_absoluteY="38dp"
         tools:textSize="36dp" />
+
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Enter your own personal details within the fields below. This will be used so your
-emergency contacts understand who the message is referring to."
-        tools:layout_editor_absoluteX="15dp"
-        tools:layout_editor_absoluteY="142dp" />
-    <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="FIRST NAME"
         tools:layout_editor_absoluteX="15dp"
         tools:layout_editor_absoluteY="142dp" />
 
     <EditText
-        android:id="@+id/editTextFirstName"
-        android:layout_width="match_parent"
+        android:id="@+id/editTextFirstName1"
+        android:layout_width="423dp"
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="textPersonName"
@@ -50,7 +40,7 @@ emergency contacts understand who the message is referring to."
         tools:layout_editor_absoluteY="142dp" />
 
     <EditText
-        android:id="@+id/editTextLastName"
+        android:id="@+id/editTextLastName1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
@@ -60,14 +50,14 @@ emergency contacts understand who the message is referring to."
         tools:layout_editor_absoluteY="52dp" />
 
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="PHONE NUMBER"
         tools:layout_editor_absoluteX="15dp"
         tools:layout_editor_absoluteY="33dp" />
 
     <EditText
-        android:id="@+id/editTextPhoneNumber"
+        android:id="@+id/editTextPhoneNumber1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
@@ -77,12 +67,9 @@ emergency contacts understand who the message is referring to."
         tools:layout_editor_absoluteY="52dp" />
 
     <Button
-        android:id="@+id/butSubmitUserDetails"
-        android:layout_width="156dp"
+        android:id="@+id/butSaveEmergency1"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Save Details" />
 
-
 </LinearLayout>
-
-
