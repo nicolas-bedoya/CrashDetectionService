@@ -109,6 +109,8 @@ public class ActivityService extends Service implements LocationListener, Sensor
 
     String[] txtViewString = new String[3];
 
+    ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -135,11 +137,11 @@ public class ActivityService extends Service implements LocationListener, Sensor
 
         // if acceleration file doesn't exist, then create it
         if (!accelerationFile.exists()) {
-           CreateSensorFile(ACCELERATION_DATA_FILE_NAME);
+           aclc.CreateSensorFile(ACCELERATION_DATA_FILE_NAME, this);
         }
         // if gyroscope file doesn't exist, then create it
         if (!gyroscopeFile.exists()) {
-            CreateSensorFile(GYROSCOPE_DATA_FILE_NAME);
+            aclc.CreateSensorFile(GYROSCOPE_DATA_FILE_NAME, this);
         }
     }
 
@@ -233,7 +235,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
             zG = event.values[2];
 
             gyroscopeData[0] = xG; gyroscopeData[1] = yG; gyroscopeData[2] = zG;
-            AddDataToSensorTxt(gyroscopeData, GYROSCOPE_DATA_FILE_NAME);
+            aclc.AddDataToSensorTxt(gyroscopeData, GYROSCOPE_DATA_FILE_NAME, this);
 
             // finding max gyroscope
             if (Math.abs(xG) > Math.abs(maxGyroscope[0])) {
@@ -271,7 +273,7 @@ public class ActivityService extends Service implements LocationListener, Sensor
                 maxAcceleration[2] = zA;
             }
 
-            AddDataToSensorTxt(accelerationData, ACCELERATION_DATA_FILE_NAME);
+            aclc.AddDataToSensorTxt(accelerationData, ACCELERATION_DATA_FILE_NAME, this);
             // acceleration of 35 was allocated as a threshold for now
             if (Math.abs(xA) > 35 || Math.abs(yA) > 35 || Math.abs(zA) > 35 ) {
                 impactAccelerometer = true;
@@ -325,51 +327,6 @@ public class ActivityService extends Service implements LocationListener, Sensor
             Log.d(TAG, "Cannot get Address!");
         }
         return new String[]{strAdd, String.valueOf(latitude), String.valueOf(longitude)};
-    }
-
-    public void CreateSensorFile(String file) {
-        FileOutputStream fos = null;
-        try {
-            fos = openFileOutput(file, MODE_PRIVATE);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                    Log.d(TAG, file + " created!");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    public void AddDataToSensorTxt(double sensor[], String file) {
-        String text = sensor[0] + ", " + sensor[1] + ", " + sensor[2] + "\n";
-        FileOutputStream fos = null;
-
-        try {
-
-            fos = openFileOutput(file, MODE_APPEND);
-            fos.write(text.getBytes());
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                    //Log.d(TAG, "txt Added");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     public void registerUpdates() {

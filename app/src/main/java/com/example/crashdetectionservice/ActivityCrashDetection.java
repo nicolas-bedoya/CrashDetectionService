@@ -59,7 +59,10 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
     private Context context;
 
     Runnable runnableImpactCheck;
+    String[] UserDetails = new String[3];
     String userFirstName, userLastName, userPhone;
+
+    String[] EmergencyDetails = new String[6];
     String emergencyFirstName1, emergencyLastName1, emergencyPhone1;
     String emergencyFirstName2, emergencyLastName2, emergencyPhone2;
     String longitude, latitude, address;
@@ -80,8 +83,15 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crash_detection);
 
-        LoadEmergencyContactTxtFile();
-        LoadUserContactTxtFile();
+        ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
+        EmergencyDetails = aclc.LoadEmergencyContactTxtFile(this);
+
+        emergencyFirstName1 = EmergencyDetails[0]; emergencyLastName1 = EmergencyDetails[1];
+        emergencyPhone1 = EmergencyDetails[2]; emergencyFirstName2 = EmergencyDetails[3];
+        emergencyLastName2 = EmergencyDetails[4]; emergencyPhone2 = EmergencyDetails[5];
+
+        UserDetails = aclc.LoadUserContactTxtFile(this);
+        userFirstName = UserDetails[0]; userLastName = UserDetails[1]; userPhone = UserDetails[2];
 
         Button butStartService = findViewById(R.id.butStartService);
         butStartService.setOnClickListener(this);
@@ -157,7 +167,6 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
             }
         }
     };
-
 
     // used to notify user that a crash was detected by the app
     private void CrashNotification() {
@@ -326,84 +335,6 @@ public class ActivityCrashDetection extends AppCompatActivity implements View.On
             Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show();
         }
 
-    }
-
-    public void LoadEmergencyContactTxtFile() {
-        FileInputStream fis = null;
-        try {
-            fis = openFileInput(EMERGENCY_CONTACT_FILE_NAME);
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String text;
-
-            while ((text = br.readLine())!=null) {
-                sb.append(text).append("\n");
-            }
-
-            String[] contactDetails = sb.toString().split("\n",6);
-            emergencyFirstName1 = contactDetails[0];
-            emergencyLastName1= contactDetails[1];
-            emergencyPhone1 = contactDetails[2];
-
-            emergencyFirstName2 = contactDetails[3];
-            emergencyLastName2 = contactDetails[4];
-            emergencyPhone2 = contactDetails[5];
-
-            Log.d(TAG, emergencyFirstName1 + " " + emergencyLastName1 + " " + emergencyPhone1);
-            Log.d(TAG, emergencyFirstName2 + " " + emergencyLastName2 + " " + emergencyPhone2);
-
-            Log.d(TAG, sb.toString());
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fis != null) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    public void LoadUserContactTxtFile() {
-        FileInputStream fis = null;
-        try {
-            fis = openFileInput(USER_CONTACT_FILE_NAME);
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String text;
-
-            while ((text = br.readLine())!=null) {
-                sb.append(text).append("\n");
-            }
-
-            String[] userContactDetails = sb.toString().split("\n",3);
-            userFirstName = userContactDetails[0];
-            userLastName = userContactDetails[1];
-            userPhone = userContactDetails[2];
-
-            Log.d(TAG, userFirstName + " " + userLastName + " " + userPhone);
-            Log.d(TAG, sb.toString());
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fis != null) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     public void CrashDetectionCheck() {

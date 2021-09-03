@@ -3,6 +3,7 @@ package com.example.crashdetectionservice;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +23,7 @@ import java.io.IOException;
 public class ActivityEmergencyContacts extends AppCompatActivity implements View.OnClickListener{
     private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt";
 
+    ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
     public Button button;
     public EditText editText;
     boolean CustomContacts = false, DefaultContact = false;
@@ -53,54 +55,6 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
     }
 
     @SuppressLint("LongLogTag")
-    public void AddDataToContactTxt() {
-        if (CustomContacts) {
-            FirstName1 = ActivityEmergency1.emergency1[0];
-            LastName1 = ActivityEmergency1.emergency1[1];
-            PhoneNumber1 = ActivityEmergency1.emergency1[2];
-
-            FirstName2 = ActivityEmergency2.emergency2[0];
-            LastName2 = ActivityEmergency2.emergency2[1];
-            PhoneNumber2 = ActivityEmergency2.emergency2[2];
-        }
-
-        String firstName1 = FirstName1 + "\n";
-        String lastName1 = LastName1 + "\n";
-        String phoneNumber1 = PhoneNumber1 + "\n";
-
-        String firstName2 = FirstName2 + "\n";
-        String lastName2 = LastName2 + "\n";
-        String phoneNumber2 = PhoneNumber2 + "\n";
-
-        FileOutputStream fos = null;
-        // Add data line by line into text file
-        try {
-            fos = openFileOutput(EMERGENCY_CONTACT_FILE_NAME, MODE_APPEND);
-            fos.write(firstName1.getBytes());
-            fos.write(lastName1.getBytes());
-            fos.write(phoneNumber1.getBytes());
-            fos.write(firstName2.getBytes());
-            fos.write(lastName2.getBytes());
-            fos.write(phoneNumber2.getBytes());
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                    Log.d(TAG, "txt added");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-
-    @SuppressLint("LongLogTag")
     @Override
     public void onClick(View v) {
         Button b = (Button) v;
@@ -120,16 +74,26 @@ public class ActivityEmergencyContacts extends AppCompatActivity implements View
                 Log.d(TAG, "FN2: " + FirstName2 + " SN2: " + LastName2 + " PN2: " + PhoneNumber2 );
                 Log.d(TAG, "PN1.length: " + PhoneNumber1.length());
 
-                DefaultContact = true;
-                AddDataToContactTxt(); // Add emergency contacts to EmergencyContactInfo.txt
+                //AddDataToContactTxt();
+                aclc.AddDataToEmergencyTxt(FirstName1, LastName1, PhoneNumber1,
+                        FirstName2, LastName2, PhoneNumber2, this); // Add emergency contacts to EmergencyContactInfo.txt
 
                 // proceed to ActivityCrashDetection once data is stored into corresponding txt files
                 startActivity(intent);
                 break;
 
             case R.id.butSaveEmergencyContacts:
-                CustomContacts = true;
-                AddDataToContactTxt();
+                FirstName1 = ActivityEmergency1.emergency1[0];
+                LastName1 = ActivityEmergency1.emergency1[1];
+                PhoneNumber1 = ActivityEmergency1.emergency1[2];
+
+                FirstName2 = ActivityEmergency2.emergency2[0];
+                LastName2 = ActivityEmergency2.emergency2[1];
+                PhoneNumber2 = ActivityEmergency2.emergency2[2];
+
+                aclc.AddDataToEmergencyTxt(FirstName1, LastName1, PhoneNumber1,
+                        FirstName2, LastName2, PhoneNumber2, this);
+
                 startActivity(intent);
                 break;
 

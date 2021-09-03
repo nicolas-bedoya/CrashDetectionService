@@ -22,6 +22,7 @@
         <activity android:name="ActivityEmergency2"/>
         <activity android:name=".ActivityCrashDetection"/>
         <activity android:name=".ActivityUserDetails"/>
+        <activity android:name=".ActivityCreateLoadContacts"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

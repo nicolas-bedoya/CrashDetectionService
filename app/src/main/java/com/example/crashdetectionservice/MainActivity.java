@@ -4,6 +4,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -18,12 +19,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     private static final String TAG = "MainActivity";
-
+    ActivityCreateLoadContacts aclc = new ActivityCreateLoadContacts();
     // bool statement used to determine if the user has accepted all permissions related to the app
     boolean permissionsComplete = true;
 
@@ -33,13 +35,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Manifest.permission.SEND_SMS
     };
 
+
     // ACCELERATION... and GYROSCOPE... used to store data from accelerometer in the format of csv
     // this is done so I can load the data into debug terminal so I can transfer data into MATLAB for graphing
     private static final String ACCELERATION_DATA_FILE_NAME = "AccelerationData.txt";
     private static final String GYROSCOPE_DATA_FILE_NAME = "GyroscopeData.txt";
     private static final String USER_CONTACT_FILE_NAME = "UserContactInfo.txt"; // stores user contact info
     private static final String EMERGENCY_CONTACT_FILE_NAME = "EmergencyContactInfo.txt"; // stores emergency contact info
-
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -86,36 +88,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dialog.show();
     }
 
-    // takes string argument which relates to the file being scanned
-    public void LoadTxtSensorFile(String file) {
-        FileInputStream fis = null;
-        try {
-            fis = openFileInput(file);
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String text;
-
-            while ((text = br.readLine())!=null) {
-                sb.append(text).append("\n");
-            }
-            // print line by line of text file into terminal
-            Log.d(TAG, sb.toString());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fis != null) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onClick(View v) {
@@ -156,11 +128,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             // load previous acceleration for plotting
             if (accelerationFile.exists()) {
-                LoadTxtSensorFile(ACCELERATION_DATA_FILE_NAME);
+                aclc.LoadTxtSensorFile(ACCELERATION_DATA_FILE_NAME, this);
             }
             // load previous gyroscope for plotting
             if (gyroscopeFile.exists()) {
-                LoadTxtSensorFile(GYROSCOPE_DATA_FILE_NAME);
+                aclc.LoadTxtSensorFile(GYROSCOPE_DATA_FILE_NAME, this);
             }
         }
     }
